@@ -10,9 +10,20 @@ import Adafruit_CharLCD as LCD
 import socket
 
 
+# CONSTANTS
+
+WAKE_TIME = 60         # seconds for the display to remain visable
+TEMPERATURE_TIME = 1  # seconds between temperature readings
+PRESSURE_TIME = 1     # seconds between air pressure readings
+TIME_TIME = 1         # seconds between time display updates
+DISPLAY_TIME = 2      # seconds for each item in rotation
+WATER_PRESSURE_OFFSET_DIGITS = 4    # digits in water pressure offset
+WATER_PRESSURE_RATE_DIGITS = 3      # digits in water pressure rate
+TIMER_EVENT = 8       # event values include LCD buttons
+
+
 # Initialize the LCD using the pins 
 lcd = LCD.Adafruit_CharLCDPlate()
-random.seed()
 
 # create some custom characters
 lcd.create_char(1, [2, 3, 2, 2, 14, 30, 12, 0])      # music note
@@ -31,47 +42,53 @@ buttons = ( LCD.SELECT,
             LCD.DOWN,
             LCD.RIGHT)
 
-WAKE_TIME = 5         # seconds for the display to remain visable
-TEMPERATURE_TIME = 10 # seconds between temperature readings
-PRESSURE_TIME = 10    # seconds between air pressure readings
-
 # display states
 S_display_datetime =           0
 S_display_IP_address =         1
 S_display_temperature =        2
 S_display_air_pressure =       3
 S_display_raw_water_pressure = 4
-S_display_raw_water_depth =    5
-S_display_water_depth =        6
+S_display_raw_water_level =    5
+S_display_water_level =        6
 S_display_water_offset =       7
 S_display_water_rate =         8
 S_edit_water_offset =          9
 S_edit_water_rate =            10
-S_display_exit =               11
-S_exit =                       12
+S_timed_display_datetime =     11
+S_timed_display_temperature =  12
+S_timed_display_air_pressure = 13
+S_timed_display_water_level =  14
+S_display_exit =               15
+S_exit =                       16
 
 # actions
 dec_water_offset =           0
-dec_water_offset_index =     1
+dec_water_offset_digit =     1
 dec_water_rate =             2
-display_air_pressure =       3
-display_datetime =           4
-display_IP_address =         5
-display_raw_water_depth =    6
-display_raw_water_pressure = 7
-display_temperature =        8
-display_water_depth =        9
-display_water_offset =       10
-display_water_rate =         11
-edit_water_offset =          12
-edit_water_rate =            13
-inc_water_offset =           14
-inc_water_offset_index =     15
-inc_water_rate =             16
-save_water_offset_index =    17
-save_water_rate_index =      18
-exit =                       19
-display_exit =               20
+dec_water_rate_digit =       3
+display_air_pressure =       4
+display_datetime =           5
+display_IP_address =         6
+display_raw_water_level =    7
+display_raw_water_pressure = 8
+display_temperature =        9
+display_water_level =        10
+display_water_offset =       11
+display_water_rate =         12
+edit_water_offset =          13
+edit_water_rate =            14
+inc_water_offset =           15
+inc_water_offset_digit =     16
+inc_water_rate =             17
+inc_water_rate_digit =       18
+save_water_offset =          19
+save_water_rate =            20
+timed_display_air_pressure = 21
+timed_display_datetime =     22
+timed_display_temperature =  23
+timed_display_water_level =  24
+exit =                       25
+display_exit =               26
 
 # State Table -- define the states and transtions for the display
 # 
@@ -95,6 +112,8 @@ states = [
   [S_display_datetime, [
              [LCD.UP,   display_exit, S_display_exit],
              [LCD.DOWN, display_IP_address, S_display_IP_address],
+             [LCD.RIGHT, timed_display_datetime, S_timed_display_datetime],
+             [TIMER_EVENT, display_datetime, S_display_datetime],
            ]],
   [S_display_IP_address, [
              [LCD.UP,   display_datetime, S_display_datetime],
@@ -103,25 +122,33 @@ states = [
   [S_display_temperature, [
              [LCD.UP,   display_IP_address, S_display_IP_address],
              [LCD.DOWN, display_air_pressure, S_display_air_pressure],
+             [LCD.RIGHT, timed_display_temperature, S_timed_display_temperature],
+             [TIMER_EVENT, display_temperature, S_display_temperature],
            ]],
   [S_display_air_pressure, [
              [LCD.UP,   display_temperature, S_display_temperature],
              [LCD.DOWN, display_raw_water_pressure, S_display_raw_water_pressure],
+             [LCD.RIGHT, timed_display_air_pressure, S_timed_display_air_pressure],
+             [TIMER_EVENT, display_air_pressure, S_display_air_pressure],
            ]],
   [S_display_raw_water_pressure, [
              [LCD.UP,   display_air_pressure, S_display_air_pressure],
-             [LCD.DOWN, display_raw_water_depth, S_display_raw_water_depth],
+             [LCD.DOWN, display_raw_water_level, S_display_raw_water_level],
+             [TIMER_EVENT, display_raw_water_pressure, S_display_raw_water_pressure],
            ]],
-  [S_display_raw_water_depth, [
+  [S_display_raw_water_level, [
              [LCD.UP,   display_raw_water_pressure, S_display_raw_water_pressure],
-             [LCD.DOWN, display_water_depth, S_display_water_depth],
+             [LCD.DOWN, display_water_level, S_display_water_level],
+             [TIMER_EVENT, display_raw_water_level, S_display_raw_water_level],
            ]],
-  [S_display_water_depth, [
-             [LCD.UP,   display_raw_water_depth, S_display_raw_water_depth],
+  [S_display_water_level, [
+             [LCD.UP,   display_raw_water_level, S_display_raw_water_level],
              [LCD.DOWN, display_water_offset, S_display_water_offset],
+             [LCD.RIGHT, timed_display_water_level, S_timed_display_water_level],
+             [TIMER_EVENT, display_water_level, S_display_water_level],
            ]],
   [S_display_water_offset, [
-             [LCD.UP,   display_water_depth, S_display_water_depth],
+             [LCD.UP,   display_water_level, S_display_water_level],
              [LCD.DOWN, display_water_rate, S_display_water_rate],
              [LCD.SELECT, edit_water_offset, S_edit_water_offset],
            ]],
@@ -130,122 +157,220 @@ states = [
              [LCD.DOWN, display_exit, S_display_exit],
              [LCD.SELECT, edit_water_rate, S_edit_water_rate],
            ]],
+  [S_edit_water_offset, [
+             [LCD.DOWN,   dec_water_offset, S_edit_water_offset],
+             [LCD.UP,     inc_water_offset, S_edit_water_offset],
+             [LCD.RIGHT,  dec_water_offset_digit, S_edit_water_offset],
+             [LCD.LEFT,   inc_water_offset_digit, S_edit_water_offset],
+             [LCD.SELECT, save_water_offset, S_display_water_offset],
+           ]],
+  [S_edit_water_rate, [
+             [LCD.DOWN,   dec_water_rate, S_edit_water_rate],
+             [LCD.UP,     inc_water_rate, S_edit_water_rate],
+             [LCD.RIGHT,  dec_water_rate_digit, S_edit_water_rate],
+             [LCD.LEFT,   inc_water_rate_digit, S_edit_water_rate],
+             [LCD.SELECT, save_water_rate, S_display_water_rate],
+           ]],
+  [S_timed_display_datetime, [
+             [LCD.UP,   display_exit, S_display_exit],
+             [LCD.DOWN, display_IP_address, S_display_IP_address],
+             [LCD.LEFT, display_datetime, S_display_datetime],
+             [TIMER_EVENT, timed_display_datetime, S_timed_display_temperature],
+           ]],
+  [S_timed_display_temperature, [
+             [LCD.UP,   display_IP_address, S_display_IP_address],
+             [LCD.DOWN, display_air_pressure, S_display_air_pressure],
+             [LCD.LEFT, display_temperature, S_display_temperature],
+             [TIMER_EVENT, timed_display_temperature, S_timed_display_air_pressure],
+           ]],
+  [S_timed_display_air_pressure, [
+             [LCD.UP,   display_temperature, S_display_temperature],
+             [LCD.DOWN, display_raw_water_pressure, S_display_raw_water_pressure],
+             [LCD.LEFT, display_air_pressure, S_display_air_pressure],
+             [TIMER_EVENT, timed_display_air_pressure, S_timed_display_water_level],
+           ]],
+  [S_timed_display_water_level, [
+             [LCD.UP,   display_raw_water_level, S_display_raw_water_level],
+             [LCD.DOWN, display_water_offset, S_display_water_offset],
+             [LCD.LEFT, display_water_level, S_display_water_level],
+             [TIMER_EVENT, timed_display_water_level, S_timed_display_datetime],
+           ]],
   [S_display_exit, [
              [LCD.UP,   display_water_rate, S_display_water_rate],
              [LCD.DOWN, display_datetime, S_display_datetime],
              [LCD.SELECT, exit, S_exit],
            ]],
-
-  [S_edit_water_offset, [
-             [LCD.DOWN,   inc_water_offset, S_edit_water_offset],
-             [LCD.UP,     dec_water_offset, S_edit_water_offset],
-             [LCD.RIGHT,  dec_water_offset_index, S_edit_water_offset],
-             [LCD.LEFT,   inc_water_offset_index, S_edit_water_offset],
-             [LCD.SELECT, save_water_offset_index, S_display_water_offset],
-           ]],
-  [S_edit_water_rate, [ [LCD.DOWN,   inc_water_rate, S_edit_water_rate],
-             [LCD.UP,     dec_water_rate, S_edit_water_rate],
-             [LCD.RIGHT,  dec_water_rate, S_edit_water_rate],
-             [LCD.LEFT,   inc_water_rate, S_edit_water_rate],
-             [LCD.SELECT, save_water_rate_index, S_display_water_rate],
-           ]],
   [S_exit,[[]]] # just a dummy
 ]
-
-### CONSTANTS
-MIN_WATER_OFFSET_INDEX = 1
-MAX_WATER_OFFSET_INDEX = 1000
 
 
 ### GLOBAL VARIABLES
 
-temperature = 0
 air_pressure = 0
+digit = 0
+event_time = 0
 raw_water_pressure = 0
-raw_water_depth = 0
-water_offset = 0
+raw_water_level = 0
+temperature = 0
+water_pressure_offset = 0
+water_pressure_rate = 0
 water_offset_index = 0
 water_rate = 0
-water_depth = 0
+water_level = 0
 
 ### FUNCTIONS
 def do_action(action):
-  global temperature
   global air_pressure
+  global digit
+  global event_time
+  global raw_water_level
   global raw_water_pressure
-  global raw_water_depth
-  global water_offset
-  global water_offset_index
+  global temperature
+  global water_pressure_offset
+  global water_pressure_rate
   global water_rate
-  global water_depth
+  global water_level
 
   if action == display_datetime:
+    lcd.set_cursor (0, 0)
+    lcd.message (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")))
+    event_time = time.time() + TIME_TIME 
+
+  if action == timed_display_datetime:
     lcd.clear()
-    lcd.message (time.strftime("%H:%M:%S") + '\n' + time.strftime("%m/%d/%Y"))
+    lcd.message (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")))
+    event_time = time.time() + DISPLAY_TIME 
 
   elif action == display_IP_address:
     s.connect(("8.8.8.8",80))
-    lcd.clear()
     lcd.message ("IP address:\n" + s.getsockname()[0])
 
   elif action == display_temperature:
+    lcd.set_cursor (0, 0)
+    lcd.message ("Air Temperature:\n" + str( temperature) + 'F  ' + str((temperature - 32) * 5/9) + 'C')
+    event_time = time.time() + TEMPERATURE_TIME 
+
+  elif action == timed_display_temperature:
     lcd.clear()
-    lcd.message ("Air Temperature:\n" + str( temperature) + '*F  ' + str( 5/9 * (temperature - 32)) + '*C')
+    lcd.message ("Air Temperature:\n" + str( temperature) + 'F  ' + str((temperature - 32) * 5/9) + 'C')
+    event_time = time.time() + DISPLAY_TIME 
 
   elif action == display_air_pressure:
+    lcd.set_cursor (0, 0)
+    lcd.message ("Air Pressure:\n" + str( air_pressure))
+    event_time = time.time() + PRESSURE_TIME 
+
+  elif action == timed_display_air_pressure:
     lcd.clear()
     lcd.message ("Air Pressure:\n" + str( air_pressure))
+    event_time = time.time() + DISPLAY_TIME 
 
   elif action == display_raw_water_pressure:
-    lcd.clear()
+    lcd.set_cursor (0, 0)
     lcd.message ("Raw Water Pressure:\n" + str( raw_water_pressure))
+    event_time = time.time() + PRESSURE_TIME 
 
-  elif action == display_raw_water_depth:
-    lcd.clear()
-    lcd.message ("Raw Water Depth:\n" + str( raw_water_depth))
+  elif action == display_raw_water_level:
+    lcd.set_cursor (0, 0)
+    lcd.message ("Raw Water Level:\n" + str( raw_water_level))
+    event_time = time.time() + PRESSURE_TIME 
 
   elif action == display_water_offset:
-    lcd.clear()
-    lcd.message ("Water Offset:\n" + str( water_offset))
+    lcd.message ("Water Offset:\n" + str( water_pressure_offset))
 
   elif action == display_water_rate:
-    lcd.clear()
-    lcd.message ("Water Rate:\n" + str( water_rate))
+    lcd.message ("Water Rate:\n" + str( water_pressure_rate))
 
-  elif action == display_water_depth:
+  elif action == display_water_level:
+    lcd.set_cursor (0, 0)
+    lcd.message ("Water Level:\n" + str( water_level))
+    event_time = time.time() + PRESSURE_TIME 
+
+  elif action == timed_display_water_level:
     lcd.clear()
-    lcd.message ("Water Depth:\n" + str( water_depth))
+    lcd.message ("Water Level:\n" + str( water_level))
+    event_time = time.time() + DISPLAY_TIME 
 
   elif action == display_exit:
-    lcd.clear()
     lcd.message ("Exit?")
 
   elif action == edit_water_offset:
-    water_offset_index = MIN_WATER_OFFSET_INDEX
-    lcd.cursorposition (2,3)
-    lcd.cursor(True)
+    digit = 0
+    lcd.message ("Edit Water Offset:\n" + str( water_pressure_offset))
+    lcd.set_cursor (WATER_PRESSURE_OFFSET_DIGITS - 1 - digit, 1)
+    lcd.show_cursor(True)
 
   elif action == inc_water_offset:
-    water_offset = water_offset + water_offset_index
+    water_pressure_offset = water_pressure_offset + 10**digit
+    lcd.message ("Edit Water Offset:\n" + str( water_pressure_offset))
+    lcd.set_cursor (WATER_PRESSURE_OFFSET_DIGITS - 1 - digit, 1)
 
   elif action == dec_water_offset:
-    water_offset = water_offset - water_offset_index
+    water_pressure_offset = water_pressure_offset -  10**digit
+    lcd.message ("Edit Water Offset:\n" + str( water_pressure_offset))
+    lcd.set_cursor (WATER_PRESSURE_OFFSET_DIGITS - 1 - digit, 1)
 
-  elif action == inc_water_offset_index:
-    if water_offset_index == MAX_WATER_OFFSET_INDEX:
-      water_offset_index = MIN_WATER_OFFSET_INDEX
+  elif action == inc_water_offset_digit:
+    if digit == WATER_PRESSURE_OFFSET_DIGITS - 1:
+      digit = 0
     else:
-      water_offset_index = water_offset_index * 10
+      digit = digit + 1
+    lcd.message ("Edit Water Offset:\n" + str( water_pressure_offset))
+    lcd.set_cursor (WATER_PRESSURE_OFFSET_DIGITS - 1 - digit, 1)
 
-  elif action == dec_water_offset_index:
-    if water_offset_index == MIN_WATER_OFFSET_INDEX:
-      water_offset_index = MAX_WATER_OFFSET_INDEX
+  elif action == dec_water_offset_digit:
+    if digit == 0:
+      digit = WATER_PRESSURE_OFFSET_DIGITS - 1
     else:
-      water_offset_index = water_offset_index / 10
+      digit = digit - 1
+    lcd.message ("Edit Water Offset:\n" + str( water_pressure_offset))
+    lcd.set_cursor (WATER_PRESSURE_OFFSET_DIGITS - 1 - digit, 1)
+
+  elif action == save_water_offset:
+    lcd.message ("Water Offset:\n" + str( water_pressure_offset))
+    lcd.show_cursor(False)
+
+  elif action == edit_water_rate:
+    digit = 0
+    lcd.message ("Edit Water Rate:\n" + str( water_pressure_rate))
+    lcd.set_cursor (WATER_PRESSURE_RATE_DIGITS - 1 - digit, 1)
+    lcd.show_cursor(True)
+
+  elif action == inc_water_rate:
+    water_pressure_rate = water_pressure_rate + 10**digit
+    lcd.message ("Edit Water Rate:\n" + str( water_pressure_rate))
+    lcd.set_cursor (WATER_PRESSURE_RATE_DIGITS - 1 - digit, 1)
+
+  elif action == dec_water_rate:
+    water_pressure_rate = water_pressure_rate -  10**digit
+    lcd.message ("Edit Water Rate:\n" + str( water_pressure_rate))
+    lcd.set_cursor (WATER_PRESSURE_RATE_DIGITS - 1 - digit, 1)
+
+  elif action == inc_water_rate_digit:
+    if digit == WATER_PRESSURE_RATE_DIGITS - 1:
+      digit = 0
+    else:
+      digit = digit + 1
+    lcd.message ("Edit Water Rate:\n" + str( water_pressure_rate))
+    lcd.set_cursor (WATER_PRESSURE_RATE_DIGITS - 1 - digit, 1)
+
+  elif action == dec_water_rate_digit:
+    if digit == 0:
+      digit = WATER_PRESSURE_RATE_DIGITS - 1
+    else:
+      digit = digit - 1
+    lcd.message ("Edit Water Rate:\n" + str( water_pressure_rate))
+    lcd.set_cursor (WATER_PRESSURE_RATE_DIGITS - 1 - digit, 1)
+
+  elif action == save_water_rate:
+    lcd.message ("Water Rate:\n" + str( water_pressure_rate))
+    lcd.show_cursor(False)
 
   elif action == exit:
-    lcd.clear()
-    lcd.message("Bye Bye")
+    lcd.message("Bye")
+
+  else:
+    pass
 
 
 ### MAIN
@@ -256,7 +381,9 @@ def do_action(action):
 #   should have some sort of delimeter to make it human readable... xml or json
 #config = open('levelvariables.conf', 'r')
 #water_pressure_offset = int(config.readline()) #range? , default
+water_pressure_offset = 3000
 #water_pressure_rate = int(config.readline()) #range? , default
+water_pressure_rate = 300
 #display_color = int(config.readline()) # single number 1..8 , default
 #config.close()
 
@@ -264,24 +391,28 @@ def do_action(action):
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # set up loop variables
-armed = True
-pressed = False
+random.seed()
+armed = True    # single action per keypress arming
 lcd.clear()
 lcd.set_color(0,0,1)
-last_pressed_time = time.time()
-last_temperature_time = last_pressed_time
-last_pressure_time = last_pressed_time
-lcd.message(str(last_pressed_time))
+current_time = time.time()
+last_pressed_time = current_time
+last_temperature_time = current_time
+last_pressure_time = current_time
+event_time = 0
+current_state = S_display_datetime
+action = display_datetime
 
 
 print 'Press Ctrl-C to quit.'
-current_state = S_display_datetime
+armed = True
+lcd.clear()
 do_action (display_datetime) 
 while current_state != S_exit:
   current_time = time.time()
   if current_time - last_pressed_time > WAKE_TIME:
     lcd.enable_display( False)
-    armed = False
+    armed = False # force waking keypress to not be processed
     lcd.set_color(0,0,0) # turn off backlight
 
   # calculate new values
@@ -294,26 +425,57 @@ while current_state != S_exit:
 
   # want to do several times a second
   raw_water_pressure = 10600 + random.randrange (10)
-  raw_water_depth = 240 + random.randrange (10)
-  water_depth = 240 + random.randrange (10)
+  raw_water_level = 240 + random.randrange (10)
+  water_level = 240 + random.randrange (10)
 
-  # wait for event (keypress
+  # handle timer event
+  if event_time != 0 and current_time - event_time > 0:
+    state = states [current_state]
+    for transition in state [State_Transitions]:
+      if transition [Transition_Trigger] == TIMER_EVENT:
+        action = transition [Transition_Action]
+        event_time = 0 # default to no event timer
+        do_action (action)
+        current_state = transition [Transition_Next_State]
+    
+  # wait for event (keypress)
+  keypressed = False
   for button in buttons:
     if lcd.is_pressed(button): # this would be faster if all buttons were read once
+      if current_time - last_pressed_time > WAKE_TIME:
+        lcd.enable_display(True)
+        lcd.set_color(0,0,1) # turn on backlight
       last_pressed_time = current_time
       state = states [current_state]
       for transition in state [State_Transitions]:
         if transition [Transition_Trigger] == button:   
-          action = transition [Transition_Action]
-          do_action (action)
-          current_state = transition [Transition_Next_State]
-#need to detect button up before next state.
+          if armed:
+            action = transition [Transition_Action]
+            lcd.clear()
+            event_time = 0 # default to no event timer and cancel existing timer
+            do_action (action)
+            current_state = transition [Transition_Next_State]
+            armed = False
+      keypressed = True
+  if not keypressed: 
+    armed = True
 
 s.close()
+
 # need to be able to change the water offset value. It can have a default.
 # the value should be saved between runs
-# backlight should time out. any button will wake without change
-#   need to compute time from last button press to the present
+#  nice if this used JSON as there might be quite a few configuration parameters
 
+# want to have a more user friendly modes:
+#  one that buttons directly select important data
 
+# could generalize the edit state:
+#  load a variable and limits on entry
+#  save the results on exit
 
+# need to work in actual measurements
+#  add smoothing function(s)
+#  add a wave detector
+#    measure peak-to-peak, period and duration (maybe a series: +3,-3,+2.5,-2.5... with times
+#    period is done with a zero crossing detection. peak is max between zeros.
+#    we'll have to see what is important
