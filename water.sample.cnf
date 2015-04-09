@@ -1,0 +1,17 @@
+[Timers]
+WAKE_TIME = 60                      ; seconds for the display to remain visable
+TEMPERATURE_TIME = 1                ; seconds between temperature readings
+PRESSURE_TIME = 1                   ; seconds between water pressure readings
+AIR_PRESSURE_TIME = 1               ; seconds between air pressure readings
+TIME_TIME = 1                       ; seconds between time display updates
+DISPLAY_TIME = 2                    ; seconds for each item in rotation
+TIMER_EVENT = 8                     ; event values include LCD buttons
+
+[Thresholds]
+TEMPERATURE_THRESHOLD = 200         ; hundreths of degree C before reporting a difference in temperature sensors
+
+[Other]
+WATER_PRESSURE_OFFSET_DIGITS = 4    ; digits in water pressure offset
+WATER_PRESSURE_RATE_DIGITS = 3      ; digits in water pressure rate
+APIKEY = YOUR_API_KEY
+BASEURL = YOUR_URL
