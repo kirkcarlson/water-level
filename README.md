@@ -8,4 +8,12 @@ should be subtracted off. There is some additional pressure gain caused by the r
 water bottle in this case) is used to smooth out the pressure fluctuations caused by the aquarium pump.
 
 An LCD mounted on an Adafruid LCD Pi Plate is used to display information near the data collection point. Most of the time the
-data will be sent over a RESTful connection to a web page. The display control is implemented as a finite state machine.
+data will be sent over a RESTful connection to a web page. The display control is implemented as a finite state machine. The
+buttons and a simple timer are used as events to drive the FSM.
+
+Things to do:
+- add the actual measuring devices
+- add code to detect waves: a zero crossing detector for period and peak detector for heights
+- code to push measurements to a remote site
+- code to load and save configuration data
+- perhaps separate out the parameter editing from the normal display functions
