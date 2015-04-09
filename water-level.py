@@ -304,63 +304,62 @@ def timed_display_datetime():
     event_time = time.time() + DISPLAY_TIME 
 
 def display_IP_address():
-    s.connect(("8.8.8.8",80))
-    lcd.message ("IP address:\n" + s.getsockname()[0])
+    lcd.message ("IP address:\n" + my_ip_address())
 
 def display_pump_temperature():
     global pump_temperature
     global event_time
     lcd.set_cursor (0, 0)
-    lcd.message ("Pump Temperature:\n{0:0.2f}F  {1:0.2f}C".format ((pump_temperature * 9/5 + 32), pump_temperature))
+    lcd.message ("Pump Temperature:\n{0:0.2f}\xDFF  {1:0.2f}\xDFC   ".format ((pump_temperature * 9/5 + 32), pump_temperature))
     event_time = time.time() + TEMPERATURE_TIME 
 
 def timed_display_pump_temperature():
     global pump_temperature
     global event_time
     lcd.clear()
-    lcd.message ("Pump Temperature:\n{0:0.2f}F  {1:0.2f}C".format ((pump_temperature * 9/5 + 32), pump_temperature))
+    lcd.message ("Pump Temperature:\n{0:0.2f}\xDFF  {1:0.2f}\xDFC   ".format ((pump_temperature * 9/5 + 32), pump_temperature))
     event_time = time.time() + DISPLAY_TIME 
 
 def display_air_temperature():
     global air_temperature
     global event_time
     lcd.set_cursor (0, 0)
-    lcd.message ("Air Temperature:\n{0:0.2f}F  {1:0.2f}C".format ((air_temperature * 9/5 + 32), air_temperature))
+    lcd.message ("Air Temperature:\n{0:0.2f}\xDFF  {1:0.2f}\xDFC   ".format ((air_temperature * 9/5 + 32), air_temperature))
     event_time = time.time() + TEMPERATURE_TIME 
 
 def timed_display_air_temperature():
     global air_temperature
     global event_time
     lcd.clear()
-    lcd.message ("Air Temperature:\n{0:0.2f}F  {1:0.2f}C".format ((air_temperature * 9/5 + 32), air_temperature))
+    lcd.message ("Air Temperature:\n{0:0.2f}\xDFF  {1:0.2f}\xDFC   ".format ((air_temperature * 9/5 + 32), air_temperature))
     event_time = time.time() + DISPLAY_TIME 
 
 def display_air_pressure():
     global event_time
     global air_pressure
     lcd.set_cursor (0, 0)
-    lcd.message ("Air Pressure:\n{0:0.0f} Pa".format(air_pressure))
+    lcd.message ("Air Pressure:\n{0:0.0f} Pa    ".format(air_pressure))
     event_time = time.time() + PRESSURE_TIME 
 
 def timed_display_air_pressure():
     global event_time
     global air_pressure
     lcd.clear()
-    lcd.message ("Air Pressure:\n{0:0.0f} Pa".format(air_pressure))
+    lcd.message ("Air Pressure:\n{0:0.0f} Pa    ".format(air_pressure))
     event_time = time.time() + DISPLAY_TIME 
 
 def display_raw_water_pressure():
     global event_time
     global raw_water_pressure
     lcd.set_cursor (0, 0)
-    lcd.message ("Raw Water Pressure:\n{0:0.0f} Pa".format(raw_water_pressure))
+    lcd.message ("Raw Water Pressure:\n{0:0.0f} Pa    ".format(raw_water_pressure))
     event_time = time.time() + PRESSURE_TIME 
 
 def display_raw_water_level():
     global event_time
     global raw_water_level
     lcd.set_cursor (0, 0)
-    lcd.message ("Raw Water Level:\n{0:0.1f}in {1:0.1f}cm".format(raw_water_level, raw_water_level * 2.54))
+    lcd.message ("Raw Water Level:\n{0:0.1f}in {1:0.1f}cm    ".format(raw_water_level, raw_water_level * 2.54))
     event_time = time.time() + PRESSURE_TIME 
 
 def display_water_offset():
@@ -374,14 +373,14 @@ def display_water_pressure_rate():
 def display_water_level():
     global event_time
     lcd.set_cursor (0, 0)
-    lcd.message ("Water Level:\n{0:0.1f}in {1:0.1f}cm".format\
+    lcd.message ("Water Level:\n{0:0.1f}in {1:0.1f}cm    ".format\
        (long_average_water_level, long_average_water_level * 2.54))
     event_time = time.time() + PRESSURE_TIME 
 
 def timed_display_water_level():
     global event_time
     lcd.clear()
-    lcd.message ("Water Level:\n{0:0.1f}in {1:0.1f}cm".format\
+    lcd.message ("Water Level:\n{0:0.1f}in {1:0.1f}cm    ".format\
        (long_average_water_level, long_average_water_level * 2.54))
     event_time = time.time() + DISPLAY_TIME 
 
@@ -532,6 +531,25 @@ def save_water_pressure_rate():
 def exit_now():
     lcd.message("Bye")
 
+def internet_on():
+    try:
+        response=urllib2.urlopen('http://74.125.228.100',timeout=1)
+        return True
+    except urllib2.URLError as err: pass
+    return False
+
+def my_ip_address():
+    try:
+      s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+      s.connect(("8.8.8.8",80))
+      return s.getsockname()[0]
+      s.close()
+    #except urllib2.URLError as err:
+    except:
+      s.close()
+      return "?.?.?.?"
+
+
 # the following are indexes into the States list so should be in the same order as the table is built
 S_display_datetime = next_state ()
 S_display_IP_address = next_state()
@@ -674,8 +692,6 @@ append_state (S_exit) # just a dummy
 
 ### MAIN
 
-#open socket to find IP address
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # set up loop variables
 #random.seed()
@@ -835,13 +851,14 @@ while current_state != S_exit:
            ",powerPerMinute:" + str(total_power) +\
            "}"
     # Send data to emoncms
-    try:
-      f = urllib2.urlopen(BASEURL + "?node=" + str(NODEID) + "&apikey=" + APIKEY + "&json=" + json)
-      f.close()
-    except urllib2.URLError, e:
-      #print e.code
-      #print e.reason
-      logging.error('Update error: ' + str(e.reason))
+    if (my_ip_address != "?.?.?.?"):
+      try:
+        f = urllib2.urlopen(BASEURL + "?node=" + str(NODEID) + "&apikey=" + APIKEY + "&json=" + json)
+        f.close()
+      except urllib2.URLError, e:
+        #print e.code
+        print e.reason
+        logging.error('Update error: ' + str(e.reason))
     last_restful_report_time = current_time
 
   # want to do several times a second, so doing it every loop
@@ -954,7 +971,6 @@ while current_state != S_exit:
   if not keypressed: 
     armed = True
 
-s.close()
 
 '''
 # need to be able to change the water offset value. It can have a default.
