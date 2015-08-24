@@ -87,7 +87,7 @@ sensor2 = BMP085.BMP085(busnum=0, mode=MODE) # this is for the pumped air temper
 
 # set up the default values
 # [Timer]
-WAKE_TIME = 60            # seconds for the display to remain visable
+VISIBLE_TIME = 60         # seconds for the display to remain visable
 TEMPERATURE_TIME = 1      # seconds between temperature readings
 PRESSURE_TIME = 1         # seconds between water pressure readings
 AIR_PRESSURE_TIME = 1     # seconds between air pressure readings
@@ -137,7 +137,7 @@ try:
         #print section + ": " + option + ": " + option_value
         if section == 'Timers':
           if option == 'wake_time':
-            WAKE_TIME = config.getint(section, option)
+            VISIBLE_TIME = config.getint(section, option)
           elif option == 'temperature_time':
             TEMPERATURE_TIME = config.getint(section, option)
           elif option == 'pressure_time':
@@ -733,7 +733,7 @@ lcd.clear()
 display_datetime() 
 while current_state != S_exit:
   current_time = time.time()
-  if current_time - last_pressed_time > WAKE_TIME:
+  if VISIBLE_TIME >0 and current_time - last_pressed_time > VISIBLE_TIME:
     lcd.enable_display(False)
     armed = False # force waking keypress to not be processed
     lcd.set_color(0,0,0) # turn off backlight
@@ -953,7 +953,7 @@ while current_state != S_exit:
   keypressed = False
   for button in buttons:
     if lcd.is_pressed(button): # this would be faster if all buttons were read once
-      if current_time - last_pressed_time > WAKE_TIME:
+      if current_time - last_pressed_time > VISIBLE_TIME:
         lcd.enable_display(True)
         lcd.set_color(0,0,1) # turn on backlight
       last_pressed_time = current_time
@@ -973,6 +973,8 @@ while current_state != S_exit:
 
 
 '''
+comments follow here to end
+
 # need to be able to change the water offset value. It can have a default.
 # the value should be saved between runs
 
@@ -990,10 +992,11 @@ while current_state != S_exit:
 #    period is done with a zero crossing detection. peak is max between zeros.
 #    we'll have to see what is important
 
-# should turn off LED on exit... maybe after a few second delay...
+# should turn off LED on exit... maybe after a few second delay... DONE
+   may want a programmable/settable leave it on command
 # historically this program had a dump of raw values. should it retain that capability and send such a string to the RESTful process? Let's say no for now
 
-want to implement a zero crossing detector and peak detector
+want to implement a zero crossing detector and peak detector... DONE
 
 for a simple report, say every 10 seconds or so
   report the peak wave seen in that period
