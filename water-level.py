@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8
 # coding=utf8
 
-# Overall code
+# Overall code Copyright (c) 2015 Kirk Carlson
 # Author: Kirk Carlson
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -292,6 +292,7 @@ def display_datetime():
     global measurement_count
     lcd.set_cursor (0, 0)
     lcd.message (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")) + "      " + str(measurement_count))
+    print (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")) + "      " + str(measurement_count))
     measurement_count = 0
     event_time = int(time.time() + TIME_TIME)
 
@@ -837,7 +838,7 @@ while current_state != S_exit:
         average_peak = peak_total / count
         average_period = peak_period_total / count
       peak_list = []
-    #print ("ave:{0:0.2f}in {1:0.2f}s min:{2:0.2f}in {3:0.2f}s max:{4:0.2f}in {5:0.2f}s power:{6:0.0f}nW".format (average_peak, average_period, peak_min, peak_min_period, peak_max, peak_max_period, total_power))
+    print ("ave:{0:0.2f}in {1:0.2f}s min:{2:0.2f}in {3:0.2f}s max:{4:0.2f}in {5:0.2f}s power:{6:0.0f}nW".format (average_peak, average_period, peak_min, peak_min_period, peak_max, peak_max_period, total_power))
     json = "{temp:" + str(int(10 * pump_temperature)) +\
            ",airPressure:" + str(average_air_pressure) +\
            ",waterPressure:" + str(average_water_pressure) +\
@@ -851,7 +852,11 @@ while current_state != S_exit:
            ",powerPerMinute:" + str(total_power) +\
            "}"
     # Send data to emoncms
-    if (my_ip_address != "?.?.?.?"):
+    print ("My IP address is " + my_ip_address())
+    print ("The base URL is " + BASEURL)
+    print ("node is " + str(NODEID))
+    print ("json is " + json)
+    if (my_ip_address() != "?.?.?.?"):
       try:
         f = urllib2.urlopen(BASEURL + "?node=" + str(NODEID) + "&apikey=" + APIKEY + "&json=" + json)
         f.close()
@@ -1029,6 +1034,28 @@ waves are more continuous
 joules = 1000 kilowatt/s
 '''
 
-# need to use degree symbol = 0xDF?
+# need to use degree symbol = 0xDF?  DONE
 # the configuration code  missed the goal of being able to write back the parameter that are modified on the fly
 # another day
+#
+# want to refactor this program
+#  initialization
+#    set up constants
+#    set up display FSM
+#  configuration .. with ability to do on the fly
+#  main loop
+#    periodically re-configure
+#    periodically update display
+#    periodically dump raw data
+#    periodically generate graphics
+#    take measurements
+#    periodically do calculations
+#    handle display FSM events new state actions
+
+# can use pipes or other interprocess communication to decouple the processes
+# one for the main loop
+# one to do the display thing
+# one to do calulations and graphics, etc
+# one to communicate with stateless head
+# one to handle dumps
+#  measure | dump | display | communicate | graphics |
