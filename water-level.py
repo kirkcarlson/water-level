@@ -292,7 +292,7 @@ def display_datetime():
     global measurement_count
     lcd.set_cursor (0, 0)
     lcd.message (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")) + "      " + str(measurement_count))
-    print (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")) + "      " + str(measurement_count))
+    #print (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")) + "      " + str(measurement_count))
     measurement_count = 0
     event_time = int(time.time() + TIME_TIME)
 
@@ -838,7 +838,7 @@ while current_state != S_exit:
         average_peak = peak_total / count
         average_period = peak_period_total / count
       peak_list = []
-    print ("ave:{0:0.2f}in {1:0.2f}s min:{2:0.2f}in {3:0.2f}s max:{4:0.2f}in {5:0.2f}s power:{6:0.0f}nW".format (average_peak, average_period, peak_min, peak_min_period, peak_max, peak_max_period, total_power))
+    #print ("ave:{0:0.2f}in {1:0.2f}s min:{2:0.2f}in {3:0.2f}s max:{4:0.2f}in {5:0.2f}s power:{6:0.0f}nW".format (average_peak, average_period, peak_min, peak_min_period, peak_max, peak_max_period, total_power))
     json = "{temp:" + str(int(10 * pump_temperature)) +\
            ",airPressure:" + str(average_air_pressure) +\
            ",waterPressure:" + str(average_water_pressure) +\
@@ -852,10 +852,10 @@ while current_state != S_exit:
            ",powerPerMinute:" + str(total_power) +\
            "}"
     # Send data to emoncms
-    print ("My IP address is " + my_ip_address())
-    print ("The base URL is " + BASEURL)
-    print ("node is " + str(NODEID))
-    print ("json is " + json)
+    #print ("My IP address is " + my_ip_address())
+    #print ("The base URL is " + BASEURL)
+    #print ("node is " + str(NODEID))
+    #print ("json is " + json)
     if (my_ip_address() != "?.?.?.?"):
       try:
         f = urllib2.urlopen(BASEURL + "?node=" + str(NODEID) + "&apikey=" + APIKEY + "&json=" + json)
