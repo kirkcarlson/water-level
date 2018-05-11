@@ -91,10 +91,10 @@ WATER_PRESSURE_RATE_DIGITS  = 3 # number of digits in water pressure rate
 ####EVENTS
 
 buttons = (LCD.SELECT,
-            LCD.LEFT,
-            LCD.UP,
-            LCD.DOWN,
-            LCD.RIGHT)
+           LCD.LEFT,
+           LCD.UP,
+           LCD.DOWN,
+           LCD.RIGHT)
 TIMEOUT = 8       # event values include LCD buttons
 
 ####FUNCTIONS
@@ -124,7 +124,7 @@ def active():
   return current_state != 'S_exit'
 
 def CtoF(degreeCelcius):
-  return degreeCelcius * 9/5 + 32 
+  return degreeCelcius * 9/5 + 32
 
 
 ####ACTIONS
@@ -150,7 +150,7 @@ def timed_display_datetime():
   lcd.clear()
   lcd.message (time.strftime("%m/%d/%Y" + "\n" + time.strftime("%H:%M:%S")) + "      " + str(measurement_count))
   measurement_count = 0
-  event_time = time.time() + DISPLAY_TIME 
+  event_time = time.time() + DISPLAY_TIME
 
 def display_IP_address():
   lcd.clear()
@@ -162,7 +162,7 @@ def display_pump_temperature():
 
   lcd.set_cursor(0,0)
   lcd.message ("Pump Temperature:\n{0:0.1f}\xDFF  {1:0.1f}\xDFC   ".format (CtoF(pump_temperature), pump_temperature))
-  event_time = time.time() + TEMPERATURE_TIME 
+  event_time = time.time() + TEMPERATURE_TIME
 
 def timed_display_pump_temperature():
   global pump_temperature
@@ -170,7 +170,7 @@ def timed_display_pump_temperature():
 
   lcd.clear()
   lcd.message ("Pump Temperature:\n{0:0.1f}\xDFF  {1:0.1f}\xDFC   ".format (CtoF(pump_temperature), pump_temperature))
-  event_time = time.time() + DISPLAY_TIME 
+  event_time = time.time() + DISPLAY_TIME
 
 def display_air_temperature():
   global air_temperature
@@ -178,7 +178,7 @@ def display_air_temperature():
 
   lcd.set_cursor(0,0)
   lcd.message ("Air Temperature:\n{0:0.1f}\xDFF  {1:0.1f}\xDFC   ".format (CtoF(pump_temperature), air_temperature))
-  event_time = time.time() + TEMPERATURE_TIME 
+  event_time = time.time() + TEMPERATURE_TIME
 
 def timed_display_air_temperature():
   global air_temperature
@@ -186,7 +186,7 @@ def timed_display_air_temperature():
 
   lcd.clear()
   lcd.message ("Air Temperature:\n{0:0.1f}\xDFF  {1:0.1f}\xDFC   ".format (CtoF(pump_temperature), air_temperature))
-  event_time = time.time() + DISPLAY_TIME 
+  event_time = time.time() + DISPLAY_TIME
 
 def display_air_pressure():
   global event_time
@@ -194,7 +194,7 @@ def display_air_pressure():
 
   lcd.set_cursor(0,0)
   lcd.message ("Air Pressure:\n{0:0.0f} Pa    ".format(air_pressure))
-  event_time = time.time() + PRESSURE_TIME 
+  event_time = time.time() + PRESSURE_TIME
 
 def timed_display_air_pressure():
   global event_time
@@ -202,7 +202,7 @@ def timed_display_air_pressure():
 
   lcd.clear()
   lcd.message ("Air Pressure:\n{0:0.0f} Pa    ".format(air_pressure))
-  event_time = time.time() + DISPLAY_TIME 
+  event_time = time.time() + DISPLAY_TIME
 
 def display_raw_water_pressure():
   global event_time
@@ -210,7 +210,7 @@ def display_raw_water_pressure():
 
   lcd.set_cursor(0,0)
   lcd.message ("Raw Water Pressure:\n{0:0.0f} Pa    ".format(raw_water_pressure))
-  event_time = time.time() + PRESSURE_TIME 
+  event_time = time.time() + PRESSURE_TIME
 
 def display_raw_water_level():
   global event_time
@@ -218,7 +218,7 @@ def display_raw_water_level():
 
   lcd.set_cursor(0,0)
   lcd.message ("Raw Water Level:\n{0:0.1f}in {1:0.1f}cm    ".format(raw_water_level, raw_water_level * 2.54))
-  event_time = time.time() + PRESSURE_TIME 
+  event_time = time.time() + PRESSURE_TIME
 
 def display_water_offset():
   global water_pressure_offset
@@ -238,7 +238,7 @@ def display_water_level():
   lcd.set_cursor(0,0)
   lcd.message ("Water Level:\n{0:0.1f}in {1:0.1f}cm    ".format\
     (long_average_water_level, long_average_water_level * 2.54))
-  event_time = time.time() + PRESSURE_TIME 
+  event_time = time.time() + PRESSURE_TIME
 
 def timed_display_water_level():
   global event_time
@@ -246,7 +246,7 @@ def timed_display_water_level():
   lcd.clear()
   lcd.message ("Water Level:\n{0:0.1f}in {1:0.1f}cm    ".format\
     (long_average_water_level, long_average_water_level * 2.54))
-  event_time = time.time() + DISPLAY_TIME 
+  event_time = time.time() + DISPLAY_TIME
 
 def display_waves():
   global event_time
@@ -295,7 +295,7 @@ def display_wave_average():
     units= "mW"
   lcd.message (("Wave {0:0.1f}' {1:0d}" + units + "   \n  Ave {2:0.1f}-{3:0.1f}s   ").format\
     (peak_max/12, power, peak_min_period, peak_max_period)) # 1ft/12in
-  event_time = time.time() + PRESSURE_TIME 
+  event_time = time.time() + PRESSURE_TIME
 
 def display_exit():
   lcd.clear()
@@ -508,6 +508,8 @@ def exit_now():
   lcd.clear()
   lcd.message("Bye")
 
+#maybe should just go into screen saver immediately to allow recovery
+
 
 '''
 The state table is implemented as a dictionary with the state name as the key.
@@ -525,7 +527,8 @@ states = {
   'state_name': {
     'entryAction': function (),
     'transitions': [
-      { 'event': event; 'action': function (), 'nextState': 'state_name' }
+      { 'event': event; 'action': function (),
+                        'nextState': 'state_name' }
       ...
     ]
   },
@@ -535,215 +538,286 @@ states = {
 
 
 states = {
-  
+
   'S_display_datetime': {
     'entryAction': display_datetime,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_exit'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_IP_address'},
-      { 'event': LCD.RIGHT,                       'nextState': 'S_timed_display_datetime'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_datetime'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_exit'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_IP_address'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_datetime'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_datetime'}
     ]
   },
-  
+
   'S_display_IP_address':  {
     'entryAction' : display_IP_address,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_datetime'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_air_temperature'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_datetime'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_air_temperature'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_air_temperature'}
     ]
   },
 
   'S_display_air_temperature': {
     'entryAction': display_air_temperature,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_IP_address'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_pump_temperature'},
-      { 'event': LCD.RIGHT,                       'nextState': 'S_timed_display_air_temperature'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_air_temperature'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_IP_address'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_pump_temperature'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_air_temperature'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_air_temperature'}
     ]
   },
 
   'S_display_pump_temperature': {
     'entryAction': display_pump_temperature,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_air_temperature'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_air_pressure'},
-      { 'event': LCD.RIGHT,                       'nextState': 'S_timed_display_pump_temperature'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_pump_temperature'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_air_temperature'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_air_pressure'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_pump_temperature'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_pump_temperature'}
     ]
   },
 
   'S_display_air_pressure': {
     'entryAction': display_air_pressure,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_pump_temperature'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_raw_water_pressure'},
-      { 'event': LCD.RIGHT,                       'nextState': 'S_timed_display_air_pressure'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_air_pressure'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_pump_temperature'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_raw_water_pressure'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_air_pressure'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_air_pressure'}
     ]
   },
 
   'S_display_raw_water_pressure': {
     'entryAction': display_raw_water_pressure,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_air_pressure'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_raw_water_level'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_raw_water_pressure'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_air_pressure'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_raw_water_level'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_raw_water_pressure'}
     ]
   },
 
   'S_display_raw_water_level': {
     'entryAction': display_raw_water_level,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_raw_water_pressure'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_water_level'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_raw_water_level'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_raw_water_pressure'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_water_level'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_raw_water_level'}
     ]
   },
 
   'S_display_water_level': {
     'entryAction': display_water_level,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_raw_water_level'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_waves'},
-      { 'event': LCD.RIGHT,                       'nextState': 'S_timed_display_water_level'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_water_level'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_raw_water_level'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_waves'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_water_level'}
     ]
   },
 
   'S_display_waves': {
     'entryAction': display_waves,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_water_level'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_wave_average'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_waves'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_water_level'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_wave_average'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': TIMEOUT,
+                             'nextState': 'S_display_waves'}
     ]
   },
 
   'S_display_wave_average': {
     'entryAction': display_wave_average,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_waves'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_water_offset'},
-      { 'event': TIMEOUT,                         'nextState': 'S_display_wave_average'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_waves'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_water_offset'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': TIMEOUT,    'nextState': 'S_display_wave_average'}
     ]
   },
 
   'S_display_water_offset': {
     'entryAction': display_water_offset,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear,         'nextState': 'S_display_wave_average'},
-      { 'event': LCD.DOWN,   'action': lcd.clear,         'nextState': 'S_display_water_pressure_rate'},
-      { 'event': LCD.SELECT, 'action': edit_water_offset, 'nextState': 'S_edit_water_offset'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_wave_average'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_water_pressure_rate'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': LCD.SELECT, 'action': edit_water_offset,
+                             'nextState': 'S_edit_water_offset'}
     ]
   },
 
   'S_display_water_pressure_rate': {
     'entryAction': display_water_pressure_rate,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear,                'nextState': 'S_display_water_offset'},
-      { 'event': LCD.DOWN,   'action': lcd.clear,                'nextState': 'S_display_exit'},
-      { 'event': LCD.SELECT, 'action': edit_water_pressure_rate, 'nextState': 'S_edit_water_pressure_rate'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_water_offset'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_exit'},
+      { 'event': LCD.RIGHT,  'nextState': 'S_timed_display_water_level'},
+      { 'event': LCD.SELECT, 'action': edit_water_pressure_rate,
+                             'nextState': 'S_edit_water_pressure_rate'}
     ]
   },
 
   'S_edit_water_offset': {
     'transitions' : [
-      { 'event': LCD.DOWN,   'action': dec_editData,      'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.UP,     'action': inc_editData,      'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.RIGHT,  'action': dec_editDigit,     'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.LEFT,   'action': inc_editDigit,     'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.SELECT, 'action': save_water_offset, 'nextState': 'S_display_water_offset'}
+      { 'event': LCD.DOWN,   'action': dec_editData,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.UP,     'action': inc_editData,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.RIGHT,  'action': dec_editDigit,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.LEFT,   'action': inc_editDigit,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.SELECT, 'action': save_water_offset,
+                             'nextState': 'S_display_water_offset'}
     ]
   },
 
   'S_edit_water_offset2': {
     'transitions' : [
-      { 'event': LCD.DOWN,   'action': dec_water_offset,       'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.UP,     'action': inc_water_offset,       'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.RIGHT,  'action': dec_water_offset_digit, 'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.LEFT,   'action': inc_water_offset_digit, 'nextState': 'S_edit_water_offset'},
-      { 'event': LCD.SELECT, 'action': save_water_offset,      'nextState': 'S_display_water_offset'}
+      { 'event': LCD.DOWN,   'action': dec_water_offset,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.UP,     'action': inc_water_offset,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.RIGHT,  'action': dec_water_offset_digit,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.LEFT,   'action': inc_water_offset_digit,
+                             'nextState': 'S_edit_water_offset'},
+      { 'event': LCD.SELECT, 'action': save_water_offset,
+                             'nextState': 'S_display_water_offset'}
     ]
   },
 
   'S_edit_water_pressure_rate2': {
     'transitions' : [
-      { 'event': LCD.DOWN,   'action': dec_water_pressure_rate,       'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.UP,     'action': inc_water_pressure_rate,       'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.RIGHT,  'action': dec_water_pressure_rate_digit, 'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.LEFT,   'action': inc_water_pressure_rate_digit, 'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.SELECT, 'action': save_water_pressure_rate,      'nextState': 'S_display_water_pressure_rate'}
+      { 'event': LCD.DOWN,   'action': dec_water_pressure_rate,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.UP,     'action': inc_water_pressure_rate,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.RIGHT,  'action': dec_water_pressure_rate_digit,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.LEFT,   'action': inc_water_pressure_rate_digit,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.SELECT, 'action': save_water_pressure_rate,
+                             'nextState': 'S_display_water_pressure_rate'}
     ]
   },
 
   'S_edit_water_pressure_rate': {
     'transitions' : [
-      { 'event': LCD.DOWN,   'action': dec_editData,             'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.UP,     'action': inc_editData,             'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.RIGHT,  'action': dec_editDigit,            'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.LEFT,   'action': inc_editDigit,            'nextState': 'S_edit_water_pressure_rate'},
-      { 'event': LCD.SELECT, 'action': save_water_pressure_rate, 'nextState': 'S_display_water_pressure_rate'}
+      { 'event': LCD.DOWN,   'action': dec_editData,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.UP,     'action': inc_editData,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.RIGHT,  'action': dec_editDigit,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.LEFT,   'action': inc_editDigit,
+                             'nextState': 'S_edit_water_pressure_rate'},
+      { 'event': LCD.SELECT, 'action': save_water_pressure_rate,
+                             'nextState': 'S_display_water_pressure_rate'}
     ]
   },
 
   'S_timed_display_datetime': {
     'entryAction': timed_display_datetime,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_exit'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_IP_address'},
-      { 'event': LCD.LEFT,   'action': lcd.clear, 'nextState': 'S_display_datetime'},
-      { 'event': TIMEOUT,                         'nextState': 'S_timed_display_air_temperature'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_exit'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_IP_address'},
+      { 'event': LCD.LEFT,   'action':    lcd.clear,
+                             'nextState': 'S_display_datetime'},
+      { 'event': TIMEOUT,    'nextState': 'S_timed_display_air_temperature'}
     ]
   },
 
   'S_timed_display_air_temperature': {
     'entryAction': timed_display_air_temperature,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_IP_address'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_air_pressure'},
-      { 'event': LCD.LEFT,   'action': lcd.clear, 'nextState': 'S_display_air_temperature'},
-      { 'event': TIMEOUT,                         'nextState': 'S_timed_display_pump_temperature'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_IP_address'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_air_pressure'},
+      { 'event': LCD.LEFT,   'action':    lcd.clear,
+                             'nextState': 'S_display_air_temperature'},
+      { 'event': TIMEOUT,    'nextState': 'S_timed_display_pump_temperature'}
     ]
   },
 
   'S_timed_display_pump_temperature': {
     'entryAction': timed_display_pump_temperature,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_air_temperature'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_air_pressure'},
-      { 'event': LCD.LEFT,   'action': lcd.clear, 'nextState': 'S_display_pump_temperature'},
-      { 'event': TIMEOUT,                         'nextState': 'S_timed_display_air_pressure'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_air_temperature'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_air_pressure'},
+      { 'event': LCD.LEFT,   'action':    lcd.clear,
+                             'nextState': 'S_display_pump_temperature'},
+      { 'event': TIMEOUT,    'nextState': 'S_timed_display_air_pressure'}
     ]
   },
 
   'S_timed_display_air_pressure': {
     'entryAction': timed_display_air_pressure,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_pump_temperature'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_raw_water_pressure'},
-      { 'event': LCD.LEFT,   'action': lcd.clear, 'nextState': 'S_display_air_pressure'},
-      { 'event': TIMEOUT,                         'nextState': 'S_timed_display_water_level'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_pump_temperature'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_raw_water_pressure'},
+      { 'event': LCD.LEFT,   'action':    lcd.clear,
+                             'nextState': 'S_display_air_pressure'},
+      { 'event': TIMEOUT,    'nextState': 'S_timed_display_water_level'}
     ]
   },
 
   'S_timed_display_water_level': {
     'entryAction': timed_display_water_level,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_raw_water_level'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_water_offset'},
-      { 'event': LCD.LEFT,   'action': lcd.clear, 'nextState': 'S_display_water_level'},
-      { 'event': TIMEOUT,                         'nextState': 'S_timed_display_datetime'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_raw_water_level'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_water_offset'},
+      { 'event': LCD.LEFT,   'action':    lcd.clear,
+                             'nextState': 'S_display_water_level'},
+      { 'event': TIMEOUT,    'nextState': 'S_timed_display_datetime'}
     ]
   },
 
   'S_display_exit': {
     'entryAction': display_exit,
     'transitions' : [
-      { 'event': LCD.UP,     'action': lcd.clear, 'nextState': 'S_display_water_pressure_rate'},
-      { 'event': LCD.DOWN,   'action': lcd.clear, 'nextState': 'S_display_datetime'},
-      { 'event': LCD.SELECT,                      'nextState': 'S_exit'}
+      { 'event': LCD.UP,     'action':    lcd.clear,
+                             'nextState': 'S_display_water_pressure_rate'},
+      { 'event': LCD.DOWN,   'action':    lcd.clear,
+                             'nextState': 'S_display_datetime'},
+      { 'event': LCD.SELECT, 'nextState': 'S_exit'}
     ]
   },
 

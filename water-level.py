@@ -152,7 +152,7 @@ try:
         option_
         #logging.debug("Configuration section: " + section + ": " + option + ": " + option_value)
         if section == 'Timers':
-          if option == 'wake_time':
+          if option == 'visible_time':
             VISIBLE_TIME = config.getint(section, option)
           elif option == 'temperature_time':
             TEMPERATURE_TIME = config.getint(section, option)
@@ -162,8 +162,6 @@ try:
             AIR_PRESSURE_TIME = config.getint(section, option)
           elif option == 'time_time':
             TIME_TIME = config.getint(section, option)
-          elif option == 'display_time':
-             DISPLAY_TIME = config.getint(section, option)
           elif option == 'display_time':
             DISPLAY_TIME = config.getint(section, option)
           elif option == 'restful_report_time':
@@ -192,6 +190,40 @@ try:
             APIKEY = config.get(section, option)
       except:
         logging.warn("Configuration value for option '" + option + "' in section '" + section + "' isn't right")
+        """
+---
+[Timers]
+VISIBLE_TIME = 60                   ; seconds for the display to remain visable
+TEMPERATURE_TIME = 1                ; seconds between temperature readings
+PRESSURE_TIME = 1                   ; seconds between water pressure readings
+AIR_PRESSURE_TIME = 1               ; seconds between air pressure readings
+TIME_TIME = 1                       ; seconds between time display updates
+DISPLAY_TIME = 2                    ; seconds for each item in rotation
+
+[Thresholds]
+TEMPERATURE_THRESHOLD = 200         ; hundreths of degree C before reporting a difference in temperature sensors
+
+[Other]
+WATER_PRESSURE_OFFSET_DIGITS = 4    ; digits in water pressure offset
+WATER_PRESSURE_RATE_DIGITS = 3      ; digits in water pressure rate
+#APIKEY = 0a35664e30afeb91e2b1cc2ad7df5b3d
+APIKEY = 7693985fa5e696b17f0a47609fd5a3df
+BASEURL = http://bonner-carlson.net/emoncms/input/post.json
+
+WARNING:root:Configuration value for option 'temperature_time' in section 'Timers' isn't right
+WARNING:root:Configuration value for option 'pressure_time' in section 'Timers' isn't right
+WARNING:root:Configuration value for option 'air_pressure_time' in section 'Timers' isn't right
+WARNING:root:Configuration value for option 'time_time' in section 'Timers' isn't right
+WARNING:root:Configuration value for option 'display_time' in section 'Timers' isn't right
+
+WARNING:root:Configuration value for option 'temperature_threshold' in section 'Thresholds' isn't right
+
+WARNING:root:Configuration value for option 'water_pressure_offset_digits' in section 'Other' isn't right
+WARNING:root:Configuration value for option 'water_pressure_rate_digits' in section 'Other' isn't right
+WARNING:root:Configuration value for option 'apikey' in section 'Other' isn't right
+WARNING:root:Configuration value for option 'baseurl' in section 'Other' isn't right
+---
+"""
 except:
   logging.warn("Configuration cannot find any sections in " + CONFIG_FILE)
 
