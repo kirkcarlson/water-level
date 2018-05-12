@@ -49,6 +49,7 @@ import datetime
 import math
 import json
 from influxdb import InfluxDBClient
+#from cluster import dummy
 
 import sched
 import config
@@ -61,6 +62,8 @@ import report
 import resamples
 import spectra
 #import stats
+from config import GRAVITY_CONSTANT
+
 
 ###NEW
 import average
@@ -467,7 +470,8 @@ def sendRawLevel2( currentTick, waterlevel, waveBaseLine, longWaterLevelAve,
   """
 
   # offset tick to trick InfluxDB
-  offsetTick = currentTick + tickDiff # offset to yesterday for now
+  #offsetTick = currentTick + tickDiff # offset to yesterday for now
+  offsetTick = currentTick # no offset
 
   json_body = []
   json_body.append (
@@ -556,7 +560,8 @@ def sendWave( currentTick, wavePeak, wavePeriod, wavePower):
   """
 
   # offset tick to trick InfluxDB
-  offsetTick = currentTick + tickDiff # offset to yesterday for now
+  #offsetTick = currentTick + tickDiff # offset to yesterday for now
+  offsetTick = currentTick # no offset
 
   json_body = []
   json_body.append (
@@ -1121,6 +1126,23 @@ def reportCluster():
   waves.cluster.report( currentTick)
 
 
+def getCurrentTick(dumb):
+  """return currentTick
+
+  Args:
+    dumb -- just to test
+  
+  Returns:
+    currentTick
+  
+  Raises:
+    None
+  """
+  global currentTick
+
+  return currentTick
+
+
 def doFFTs():
   """do an FFT on each of the resampled data streams
 
@@ -1153,7 +1175,8 @@ def sendFftSamples():
 
   # send measurements to the influxdb
 
-  offsetTick = currentTick + tickDiff # offset to yesterday for now
+  #offsetTick = currentTick + tickDiff # offset to yesterday for now
+  offsetTick = currentTick # no offset
 
   index = 0
   json_body = []
@@ -1162,12 +1185,14 @@ def sendFftSamples():
   
   for spectrum in spectraTimeSeries.spectra:
     if len( spectrum.responses) >= 1:
-      if index < numberOfLengths: # and index < 5: #== 0:
+      if index < numberOfLengths:
+        boatLength = config.BOAT_LENGTHS[ index]
+        cyclePeriod = math.sqrt (boatLength / GRAVITY_CONSTANT/ 2 /math.pi) # ft/s
         json_body.append (
           {
             "measurement" : "boatResponse",
             "tags" : {
-              "boatLength" : config.BOAT_LENGTHS[ index]
+              "boatLength" : boatLength
             },
             "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
                       datetime.datetime.fromtimestamp(offsetTick)),
@@ -1176,15 +1201,42 @@ def sendFftSamples():
             }
           }
         )
+        json_body.append (
+          {
+            "measurement" : "startBoatResponse",
+            "tags" : {
+              "boatLength" : boatLength
+            },
+            "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
+                      datetime.datetime.fromtimestamp(offsetTick - cyclePeriod)),
+            "fields" : {
+              "response" : spectrum.responses[-1]
+            }
+          }
+        )
       else:
+        period = config.TARGET_PERIODS[ index - numberOfLengths]
         json_body.append(
           {
             "measurement" : "periodicResponse",
             "tags" : {
-              "period" : config.TARGET_PERIODS[ index - numberOfLengths]
+              "period" : period
             },
             "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
-                      datetime.datetime.fromtimestamp(offsetTick)),
+                      datetime.datetime.fromtimestamp( offsetTick)),
+            "fields" : {
+              "response" : spectrum.responses[-1]
+            }
+          }
+        )
+        json_body.append (
+          {
+            "measurement" : "startPeriodicResponse",
+            "tags" : {
+              "period" : period
+            },
+            "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
+                      datetime.datetime.fromtimestamp( offsetTick - period)),
             "fields" : {
               "response" : spectrum.responses[-1]
             }
@@ -1268,7 +1320,9 @@ def schedClusterEnd( someFunction, currentTime, period):
     None
   """
 
-  return mainSched.schedule( someFunction, currentTime, 0, period)
+  print "schedClusterEnd", someFunction, currentTime, period
+  #mainSched.schedule( dummy(), currentTime, 0, period)
+  return mainSched.schedule( someFunction(), currentTime, 0, period)
 
 
 def unschedClusterEnd( taskID):
@@ -1378,7 +1432,7 @@ def test():
   if databaseName not in client.get_list_database():
     client.create_database( databaseName)
     client.create_retention_policy("keep forever", "INF", 1,
-            database=databaseName)
+        database=databaseName)
 
   client.switch_database( databaseName)
 
@@ -1537,7 +1591,7 @@ def test():
   #mainSched.schedule( plotLongWaterLevel1, currentTick, EVERY_HOUR, 0)
   #mainSched.schedule( plotLongWaterLevel8, currentTick, EVERY_8_HOURS, 0)
   mainSched.schedule( plotLongWaterLevel8, currentTick, EVERY_HOUR, 0)
-  mainSched.schedule( plotCluster, currentTick, EVERY_15_MINUTES, 0)
+  mainSched.schedule( plotCluster, currentTick, EVERY_5_MINUTES, 0)
   # do reports last as they contain resets
   #mainSched.schedule( waterLevelReport15, currentTick, EVERY_15_MINUTES, 0)
     # has a list index out of range error
@@ -1549,6 +1603,7 @@ def test():
   print "sampleTimeSeries",sampleTimeSeries
   print "spectraTimeSeries",spectraTimeSeries
 
+  print "currentTick", currentTick, "getCurrentTick()", getCurrentTick(1),
   ###MAIN LOOP
   #for _ in range (0, 3*60*60*30): #200000000): # limited test run
   while True: # until stopped...

@@ -51,6 +51,13 @@ client = None
 class Cluster( object):
   """The consolidated conditions a cluster of power spikes
 
+  A cluster is a series of related waves. Sea waves are near the same period.
+  A cluster begins with the detection of coherent waves.
+  A cluster ends with the lack of coherent waves for more than one wave period,
+  an abrupt change in period, or decrease of power to triggering threshold.
+  ... it could be a change in slope of energy to separate "hay stacks" or
+  "lumps."
+
   A cluster is initialized with current values and watch criteria.
 
   Periodically a value is evaluated by the watch to set the maximum, minimum,
@@ -110,8 +117,14 @@ class Cluster( object):
 
   def reportDummy ( self):
     """Dummy scheduling function for reporting a cluster end event"""
-    from main import currentTick
+    from main import currentTick, getCurrentTick
+    #from main import currentTick
+    #import main
 
+    getIt = getCurrentTick
+    print "reportDummy"
+    print "currentTick", currentTick
+    print "getCurrentTick()", getCurrentTick(1), getIt(1)
     self.report( currentTick)
 
 
@@ -121,13 +134,19 @@ class Cluster( object):
   def report( self, tick):
     """Print a report summarizing the power spike cluster
     """
+    from main import currentTick
+    from main import getCurrentTick
+
+    print "tick", tick, "self.clusterTick", self.clusterTick
+    print "currentTick", currentTick
+    print "getCurrentTick()", getCurrentTick(1)
     self.outChan.prEvent( tick , # this marks end of cluster
                           self.name,
                           "cluster end energy: {:.1f} max power: {:4.1f} duration: {:.1f} "\
                               "max period: {:.1f}".format(
                                   self.energy,
                                   self.maxPower,
-                                  tick-self.clusterTick,
+                                  tick - self.clusterTick,
                                   self.maxPeriod),
                            report.VERB_DEBUG)
 
@@ -323,7 +342,8 @@ def sendClusterEvent( time, distance, period, energy ):
   walltime = datetime.datetime.now()
   daydiff = (walltime - datetime.datetime.fromtimestamp(time)).days
   tickDiff = daydiff * 24 * 3600 # offset to yesterday for now
-  offsetTick = time + tickDiff # offset to yesterday for now
+  #offsetTick = time + tickDiff # offset to yesterday for now
+  offsetTick = time # no offset
 
   json_body = []
   # should only do the following once...
@@ -343,6 +363,22 @@ def sendClusterEvent( time, distance, period, energy ):
   if not client.write_points(json_body):
     print "Not updating database"
       
+
+'''
+def dummy():
+  """tests whether callback routines will work with scheduler
+
+  Args:
+    None
+  
+  Returns:
+    None
+  
+  Raises:
+    None
+  """
+  print "Dummy got called"
+'''
 
   
 
