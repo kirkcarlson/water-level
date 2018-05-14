@@ -30,8 +30,8 @@ THE SOFTWARE.
 import plot
 import stats
 import watch
-import cluster
-from config import CLUSTER_MULTIPLIER
+#import cluster
+#from config import CLUSTER_MULTIPLIER
 
 
 
@@ -65,8 +65,8 @@ class RawWaves (object):
     self.powers = stats.Stats([ ("Short",2), ("Medium", 3*30)]) # 3 seconds
     self.powerwatch = watch.Watch("Wave power", 0, tick, 10)
     reportChan = report.ReportChannel("")
-    self.cluster = cluster.Cluster("Wave cluster", reportChan,
-                                   CLUSTER_MULTIPLIER)
+    #self.cluster = cluster.Cluster("Wave cluster", reportChan,
+    #                               CLUSTER_MULTIPLIER)
 
 
 #pylint: disable=too-many-arguments
@@ -80,7 +80,8 @@ class RawWaves (object):
       power: float (nW) The power of the wave.
     
     Returns:
-      None
+      True if wave qualifies as a cluster
+      False if wave does not qualify as a cluster
     
     Raises:
       None
@@ -93,9 +94,9 @@ class RawWaves (object):
     self.periods.analyze(period)
     self.powerwatch.analyze(tick, power, reportChan)
     self.powers.analyze(power)
-    self.cluster.analyzePower( tick, power, period,
-                               self.powers.averages[1][-1])
-    self.cluster.analyzePeriod( tick, period)
+    #self.cluster.analyzePower( tick, power, period,
+    #                           self.powers.averages[1][-1])
+    #return self.cluster.analyzePeriod( tick, period)
 #pylint: enable=too-many-arguments
 
 
@@ -137,7 +138,7 @@ class RawWaves (object):
     self.peaks.freshen(period)
     self.periods.freshen(period)
     self.powers.freshen(period)
-    self.cluster.freshen( period)
+    #self.cluster.freshen( period)
 
 
   def plotWavePeaks (self, timeToPlot, name):

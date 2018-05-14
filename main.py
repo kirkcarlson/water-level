@@ -37,11 +37,85 @@ value has limited value, because the mean should be zero as it has the DC
 component subtracted from it.
 
 2 Code is in a mixed state. It has some experimental code and some older code.
-Need to decide which to keep and move on.
+3 Partial conversion to InfluxDB and Grafana show their benefits. Now need to limit
+the use of Series as the program eventually consumes all RAM...
 
+
+main.py:  longWaterLevels = series.Series( "Long Water Level", "in")
+main.py:  longWaterLevelAves = series.Series( "Average Water Level", "in")
+main.py:  longWaterLevelVariations = series.Series( "Ave Water Level Variations", "")
+main.py:  longWaterLevelHighs = series.Series( "Average Water Level Highs", "in")
+main.py:  longWaterLevelLows = series.Series( "Average Water Level Lows", "in")
+main.py:  rawWaterLevels = series.Series( "Raw Water Level", "in")
+main.py:  sampleTimeSeries = resamples.Resamples()
+main.py:  sampleTimeSeries.resamples.append( resamples.Resample(
+main.py:  spectraTimeSeries = spectra.Spectra()
+main.py:  spectraTimeSeries.spectra.append ( spectra.Spectrum(
+main.py:  waveBaselines = series.Series( "Wave Baseline", "in")
+main.py:  waveHeights = series.Series( "Wave Height", "in")
+main.py:  waveHeightAves = series.Series( "Average Wave Height", "in")
+main.py:  waveHeightVariations = series.Series( "Wave Height Variations", "in")
+main.py:  waveTimes = series.Series( "Wave Times", "s")
+main.py:  waveTimes2 = series.Series( "Wave Times2", "s")
+main.py:  wavePeaks = series.Series( "Wave Peaks", "in")
+main.py:  wavePeaks2 = series.Series( "Wave Peaks2", "in")
+main.py:  wavePeriods = series.Series( "Wave Periods", "s")
+main.py:  wavePeriods2 = series.Series( "Wave Periods2", "s")
+main.py:  wavePowers = series.Series( "Wave Power", "nw?")
+main.py:  wavePowers2 = series.Series( "Wave Power2", "nw?")
+main.py:  wavePowerVariations = series.Series( "Wave Power Variations", "")
+main.py:  wavePowerVariations2 = series.Series( "Wave Power Variations2", "")
+
+main.py:  sampleTimeSeries.resamples[-1]))
+
+4 need to find things that use the last element of a list [-1]
+cluster.py:      endTime = self.events[-1]["time"]
+level.py:      waveHeight = level - self.stats.averages[1][-1]
+level.py:      # waveHeight = level - self.stats.averages[1][-1]
+level.py:      #waveHeight = self.stats.averages[0][-1] - self.stats.averages[1][-1]
+level.py:      # was using waveHeight = shortAves[-1] - longAves[-1]
+main.py:  ###longWaterLevel.analyze( currentTick, waterLevel.stats.averages[2][-1],
+main.py:    waterLevelChangeRate1Minute = ( longWaterLevels.values[-1] -
+main.py:    waterLevelChangeRate5Minute = ( longWaterLevels.values[-1] -
+main.py:    waterLevelChangeRate15Minute = ( longWaterLevels.values[-1] -
+main.py:              "response" : spectrum.responses[-1]
+main.py:              "response" : spectrum.responses[-1]
+main.py:              "response" : spectrum.responses[-1]
+main.py:              "response" : spectrum.responses[-1]
+main.py:        sampleTimeSeries.resamples[-1]))
+main.py:        sampleTimeSeries.resamples[-1]))
+main.py:    #waveHeight = waterLevel.waveHeights[-1]
+plot.py:  baseTime = times [-1]
+plot.py:    path = fileTimePng (baseName, times[-1])
+plot.py:    timeFirstName = fileTimeFirstPng (baseName, times[-1])
+plot.py:    path = fileTimePng (baseName, times[-1])
+plot.py:    timeFirstName = fileTimeFirstPng (baseName, times[-1])
+plot.py:  baseTime = pSpectra.times[-1]
+plot.py:        path = fileTimePng (name, pSpectra.times[-1],
+plot.py:        path = fileTimePng (name, pSpectra.times[-1])
+rawwaves.py:    #                           self.powers.averages[1][-1])
+spectra1.py:    specs.spectra.append ( Spectrum( samples.resamples[-1]))
+spectra.py:    specs.spectra.append ( Spectrum( samples.resamples[-1]))
+stats.py:        aveage.append( util.runningAverage( average[-1], value,
+stats.py:            self.averages[0][-1] * self.averages[0][-1],
+stats.py:        diff = self.sumOfSquares -(self.averages[1][-1] * self.averages[1][-1])
+stats.py:        self.coefficientOfVariations.append( self.standardDeviations[-1] /\
+stats.py:            self.averages[1][-1] * 100) # percent
+stats.py:        mean = average[-1]
+stats.py:        mean = self.averages[1][-1] # use updated medium for the mean
+stats.py:          self.averages[0][-1],
+stats.py:          self.standardDeviations[-1],
+stats.py:          self.coefficientOfVariations[-1])
+stats.py:      print "stats mean:{0:.2f}".format( self.averages[0][-1])
+stats.py:        "{:5.2f}".format(self.values[-1])) )
+stats.py:          "{:5.2f}".format( self.averages[i][-1])) )
+stats.py:          "{:5.2f}".format( self.standardDeviations[-1]) ))
+stats.py:          "{:5.2f}".format( self.coefficientOfVariations[-1]) ))
+watch.py:  levelWatch.report( times[-1], outChan) # print watch stats
+
+5 get rid of most (all?) of the plot stuff
 
 """
-
 #### IMPORTS ####
 
 import sys
@@ -49,10 +123,10 @@ import datetime
 import math
 import json
 from influxdb import InfluxDBClient
-#from cluster import dummy
 
 import sched
 import config
+import cluster
 import findwave
 import inputchan
 import level
@@ -158,6 +232,7 @@ wavePowers2 = None
 wavePowerStats2 = None
 wavePowerVariations2 = None
 
+waveCluster = None
 
 
 #### FUNCTIONS ####
@@ -287,6 +362,26 @@ def processCommandLineArguments():
 #  #  CSVChannel.writeln(RWCSVFORMAT.format(tick, peak, period, power) )
 
 
+def reportCluster( currentTime):
+  """report on the wave clusters in the past config.CLUSTER_WINDOW
+
+  Args:
+    None
+  
+  Returns:
+    None
+  
+  Raises:
+    None
+  """
+  global cluster
+  global currentTick
+
+  #clusterReport( currentTick)
+  waveCluster.report( currentTick)
+  waveCluster.reset( currentTick)
+
+
 def printPlot (plotName, numberToPlot, times, yLabel, lines):
   """ print the plotting parameters for debug purposes
 
@@ -308,7 +403,7 @@ def printPlot (plotName, numberToPlot, times, yLabel, lines):
   pass
 
 
-def updateLongWaterLevel():
+def updateLongWaterLevel( currentTime):
   """update the long water level time series
 
   Args:
@@ -324,7 +419,7 @@ def updateLongWaterLevel():
   ###Update the long water level from the more detailed raw water level.###
   ###longWaterLevel.analyze( currentTick, waterLevel.stats.averages[2][-1],
   ###                        outChan)
-  longWaterTicks.append( currentTick)
+  longWaterTicks.append( currentTime)
   longAve = longWaterLevelAve.average
   longWaterLevels.append( longAve)
   longWaterLevelStats.append (longAve)
@@ -355,7 +450,7 @@ def updateLongWaterLevel():
   waterLevelChangeRate15Minutes.append( waterLevelChangeRate15Minute)
 
 
-def updateLongWaterLevelHighLow():
+def updateLongWaterLevelHighLow( currentTime):
   """update the long water level high low time series
 
   Args:
@@ -368,12 +463,12 @@ def updateLongWaterLevelHighLow():
     None
   """
 
-  longWaterLevelHiLoTicks.append( currentTick)
+  longWaterLevelHiLoTicks.append( currentTime)
   longWaterLevelHighs.append( longWaterLevelHighLow.high)
   longWaterLevelLows.append( longWaterLevelHighLow.low)
 
 
-def waterLevelReport15():
+def waterLevelReport15( currentTime):
   """report on the water level in the last 15 minutes
 
   Args:
@@ -387,11 +482,11 @@ def waterLevelReport15():
   """
 
   ###Generate the 15 minute water level report.###
-  waterLevel.report( currentTick, outChan)
+  waterLevel.report( currentTime, outChan)
   waterLevel.watch.reset( currentTick)
 
 
-def longWaterLevelReport15():
+def longWaterLevelReport15( currentTime):
   """report on the long term water level in the last 15 minutes
 
   Args:
@@ -404,13 +499,13 @@ def longWaterLevelReport15():
     None
   """
 
-  ###longWaterLevel.report( currentTick, outChan)
-  ###longWaterLevel.watch.reset( currentTick)
-  longWaterLevelHighLow.report( currentTick, outChan)
+  ###longWaterLevel.report( currenTime, outChan)
+  ###longWaterLevel.watch.reset( currentTime)
+  longWaterLevelHighLow.report( currentTime, outChan)
   longWaterLevelHighLow.reset()
 
 
-def waveReport15():
+def waveReport15( currentTime):
   """report on wave activity in the last 15 minutes
 
   Args:
@@ -423,13 +518,13 @@ def waveReport15():
     None
   """
 
-  waves.report( currentTick, outChan)
-  waves.peakwatch.reset( currentTick) # other periods will want their own watch
-  waves.periodwatch.reset( currentTick)
-  waves.powerwatch.reset( currentTick) 
+  waves.report( currentTime, outChan)
+  waves.peakwatch.reset( currentTime) # other periods will want their own watch
+  waves.periodwatch.reset( currentTime)
+  waves.powerwatch.reset( currentTime) 
 
 
-def plotRawLevel2():
+def plotRawLevel2( currentTime):
   """plot the raw water level for the past 1 minute
 
   Args:
@@ -610,7 +705,24 @@ def sendWave( currentTick, wavePeak, wavePeriod, wavePower):
   #  print '.',
 
 
-def plotLongWaterLevelVariation():
+def sendClusterInternals( tick, energy, distance):
+  json_body = []
+  json_body.append (
+    {
+      "measurement" : "clusterInternal",
+      "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
+                datetime.datetime.fromtimestamp(tick)),
+      "fields" : {
+        "energy" : energy+0.,
+        "distance" : distance+0.,
+      }
+    }
+  )
+  if not client.write_points(json_body):
+    print "Not updating database"
+
+
+def plotLongWaterLevelVariation( currentTime):
   """plot the long water level variation
 
   Args:
@@ -632,7 +744,7 @@ def plotLongWaterLevelVariation():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotWaterLevelChangeRates():
+def plotWaterLevelChangeRates( currentTime):
   """plot the water level change rates
 
   Args:
@@ -658,7 +770,7 @@ def plotWaterLevelChangeRates():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotLongWaterLevelHighLows():
+def plotLongWaterLevelHighLows( currentTime):
   """plot the long water level high lows
 
   Args:
@@ -685,7 +797,7 @@ def plotLongWaterLevelHighLows():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWaveHeights():
+def plotRawWaveHeights( currentTime):
   """plot the raw wave heights for the past 30 minutes
 
   Args:
@@ -711,7 +823,7 @@ def plotRawWaveHeights():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWaveHeightStats():
+def plotRawWaveHeightStats( currentTime):
   """plot the wave height statistics the past 15 minutes
 
   Args:
@@ -742,7 +854,7 @@ def plotRawWaveHeightStats():
   waveHeightHighLow.reset()
 
 
-def plotRawWavePeaks():
+def plotRawWavePeaks( currentTime):
   """plot the wave peaks the past 15 minutes
 
   Args:
@@ -765,7 +877,7 @@ def plotRawWavePeaks():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWavePeriods():
+def plotRawWavePeriods( currentTime):
   """plot the wave periods the past 15 minutes
 
   Args:
@@ -788,7 +900,7 @@ def plotRawWavePeriods():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWavePower():
+def plotRawWavePower( currentTime):
   """plot the raw wave power the past 15 minutes
 
   Args:
@@ -811,7 +923,7 @@ def plotRawWavePower():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWavePowerVariations():
+def plotRawWavePowerVariations( currentTime):
   """plot the wave power variations the past 15 minutes
 
   Args:
@@ -854,7 +966,7 @@ def plotRawWavePowerVariations():
   #waveHeightHighLow.reset()
 
 
-def plotRawWavePeaks2():
+def plotRawWavePeaks2( currentTime):
   """plot the raw wave peaks the past 15 minutes
 
   Args:
@@ -879,7 +991,7 @@ def plotRawWavePeaks2():
   '''
 
 
-def plotRawWavePeriods2():
+def plotRawWavePeriods2( currentTime):
   """plot the raw wave periods the past 15 minutes
 
   Args:
@@ -902,7 +1014,7 @@ def plotRawWavePeriods2():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWavePower2():
+def plotRawWavePower2( currentTime):
   """plot the raw wave power the past 15 minutes
 
   Args:
@@ -925,7 +1037,7 @@ def plotRawWavePower2():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawWavePowerVariations2():
+def plotRawWavePowerVariations2( currentTime):
   """plot the wave power variations the past 15 minutes
 
   Args:
@@ -949,7 +1061,7 @@ def plotRawWavePowerVariations2():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotRawLevel():
+def plotRawLevel( currentTime):
   """plot the raw water level for the past 10 minutes
 
   Args:
@@ -973,7 +1085,7 @@ def plotRawLevel():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotWaveHeight():
+def plotWaveHeight( currentTime):
   """Plot the raw wave heights
 
   Args:
@@ -991,7 +1103,7 @@ def plotWaveHeight():
   waterLevel.freshen ( (DUR_1_MINUTE -1) * config.SAMPLES_PER_SECOND)
 
 
-def plotRawPeaks():
+def plotRawPeaks( currentTime):
   """plot the raw wave peaks
 
   Args:
@@ -1007,7 +1119,7 @@ def plotRawPeaks():
   waves.plotWavePeaks( DUR_30_MINUTES, "Wave Peaks")
 
 
-def plotRawPeriods():
+def plotRawPeriods( currentTime):
   """plot raw wave periods
 
   Args:
@@ -1023,7 +1135,7 @@ def plotRawPeriods():
   waves.plotWavePeriods( DUR_30_MINUTES, "Wave Periods")
 
 
-def plotRawPower():
+def plotRawPower( currentTime):
   """plot the power of raw waves
 
   Args:
@@ -1041,7 +1153,7 @@ def plotRawPower():
   waves.freshen ( DUR_30_MINUTES) 
 
 
-def plotLongWaterLevel1():
+def plotLongWaterLevel1( currentTime):
   """plot the long term water level for the past hour
 
   Args:
@@ -1066,7 +1178,7 @@ def plotLongWaterLevel1():
   plot.plotCommon (plotName, numberToPlot, times, yLabel, lines)
 
 
-def plotLongWaterLevel8():
+def plotLongWaterLevel8( currentTime):
   """plot the long term water level for the past 8 hours
 
   Args:
@@ -1091,7 +1203,7 @@ def plotLongWaterLevel8():
   longWaterLevels.freshen( 1*60)
 
 
-def plotCluster():
+def plotCluster( currentTime):
   """plot the wave clusters
 
   Args:
@@ -1105,45 +1217,14 @@ def plotCluster():
   """
 
   ###Plot the raw wave power.###
-  print "plotting cluster (raw wave power?"
-  waves.cluster.plot ( DUR_30_MINUTES, "Wave Cluster")
-  waves.cluster.freshen ( DUR_30_MINUTES) 
+  #print "plotting cluster (raw wave power?"
+  #waves.cluster.plot ( DUR_30_MINUTES, "Wave Cluster")
+  #waves.cluster.freshen ( DUR_30_MINUTES) 
 
 
-def reportCluster():
-  """report on the wave clusters in the past __ minutes
-
-  Args:
-    None
-  
-  Returns:
-    None
-  
-  Raises:
-    None
-  """
-
-  waves.cluster.report( currentTick)
 
 
-def getCurrentTick(dumb):
-  """return currentTick
-
-  Args:
-    dumb -- just to test
-  
-  Returns:
-    currentTick
-  
-  Raises:
-    None
-  """
-  global currentTick
-
-  return currentTick
-
-
-def doFFTs():
+def doFFTs( currentTime):
   """do an FFT on each of the resampled data streams
 
   Args:
@@ -1156,7 +1237,7 @@ def doFFTs():
     None
   """
 
-  spectraTimeSeries.evaluate( currentTick)
+  spectraTimeSeries.evaluate( currentTime)
   sendFftSamples()
 
 
@@ -1252,7 +1333,7 @@ def sendFftSamples():
       
 
 
-def plotWakeSpectra15():
+def plotWakeSpectra15( currentTime):
   """plot the wake spectra over the last 15 minutes
 
   Args:
@@ -1270,7 +1351,7 @@ def plotWakeSpectra15():
                               DUR_15_MINUTES, "Wake Response")
 
 
-def plotWaveSpectra15():
+def plotWaveSpectra15( currentTime):
   """plot the wave spectra over the last 15 minutes
 
   Args:
@@ -1288,7 +1369,7 @@ def plotWaveSpectra15():
                               DUR_15_MINUTES, "Wave Response")
  
 
-def plotWakeSpectra1():
+def plotWakeSpectra1( currentTime):
   """plot the wake spectra over the last minute
 
   Args:
@@ -1314,15 +1395,17 @@ def schedClusterEnd( someFunction, currentTime, period):
     None
   
   Returns:
-    None
+    processID from sched.schedule()
   
   Raises:
     None
   """
-
-  print "schedClusterEnd", someFunction, currentTime, period
-  #mainSched.schedule( dummy(), currentTime, 0, period)
-  return mainSched.schedule( someFunction(), currentTime, 0, period)
+  return mainSched.schedule(
+    reportCluster,
+    #someFunction(), # needs another parameter, but that binds the value
+    currentTime,
+    0,
+    period)
 
 
 def unschedClusterEnd( taskID):
@@ -1408,6 +1491,8 @@ def test():
   global wavePowers2
   global wavePowerStats2
   global wavePowerVariations2
+
+  global waveCluster
 
 
   # do some initialization stuff
@@ -1511,6 +1596,11 @@ def test():
   wavePowers2 = series.Series( "Wave Power2", "nw?")
   wavePowerStats2 = stats2.Stats2( "Wave Power Stats22", "nw?", 20)
   wavePowerVariations2 = series.Series( "Wave Power Variations2", "")
+ 
+  waveCluster = cluster.Cluster( "Wave Clusters",
+                                 outChan,
+                                 config.CLUSTER_MULTIPLIER )
+  clusterTaskID = None
   
   ###NEW ^
 
@@ -1561,49 +1651,48 @@ def test():
   # want to plot the cleaned water level over time: every hour, every 8 hours,
   # daily. this needs less precision.. maybe a sample once a minute
   #mainSched.schedule( plotRawLevel, currentTick, EVERY_MINUTE, 0)
-  mainSched.schedule( plotWaveHeight, currentTick, EVERY_MINUTE, 0)
-  mainSched.schedule( plotRawPeaks, currentTick, EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotRawPeriods, currentTick, EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotRawPower, currentTick, EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotWakeSpectra15, currentTick, EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotWaveSpectra15, currentTick, EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotLongWaterLevelVariation, currentTick,
-                      EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotLongWaterLevelHighLows, currentTick,
-                      EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotWaterLevelChangeRates, currentTick,
-                      EVERY_15_MINUTES, 0)
-  mainSched.schedule( plotRawLevel2, currentTick, EVERY_MINUTE, 0)
-  mainSched.schedule( plotRawWaveHeightStats, currentTick, EVERY_MINUTE, 0)#NEW
+  ##mainSched.schedule( plotWaveHeight, currentTick, EVERY_MINUTE, 0)
+  ##mainSched.schedule( plotRawPeaks, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotRawPeriods, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotRawPower, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotWakeSpectra15, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotWaveSpectra15, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotLongWaterLevelVariation, currentTick,
+  ##                    EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotLongWaterLevelHighLows, currentTick,
+  ##                    EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotWaterLevelChangeRates, currentTick,
+  ##                    EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( plotRawLevel2, currentTick, EVERY_MINUTE, 0)
+  ##mainSched.schedule( plotRawWaveHeightStats, currentTick, EVERY_MINUTE, 0)#NEW
+  ##
+  ##mainSched.schedule( plotRawWaveHeights, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePeaks, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePeriods, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePower, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePowerVariations, currentTick, EVERY_MINUTE, 0)
 
-  mainSched.schedule( plotRawWaveHeights, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePeaks, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePeriods, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePower, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePowerVariations, currentTick, EVERY_MINUTE, 0)
+  ##mainSched.schedule( plotRawWavePeaks2, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePeriods2, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePower2, currentTick, EVERY_MINUTE, 0) ###NEW
+  ##mainSched.schedule( plotRawWavePowerVariations2, currentTick, EVERY_MINUTE,0)
 
-  mainSched.schedule( plotRawWavePeaks2, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePeriods2, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePower2, currentTick, EVERY_MINUTE, 0) ###NEW
-  mainSched.schedule( plotRawWavePowerVariations2, currentTick, EVERY_MINUTE,0)
-
-  mainSched.schedule( plotWakeSpectra1, currentTick, EVERY_MINUTE, 0)
+  ##mainSched.schedule( plotWakeSpectra1, currentTick, EVERY_MINUTE, 0)
   #mainSched.schedule( plotLongWaterLevel1, currentTick, EVERY_HOUR, 0)
   #mainSched.schedule( plotLongWaterLevel8, currentTick, EVERY_8_HOURS, 0)
-  mainSched.schedule( plotLongWaterLevel8, currentTick, EVERY_HOUR, 0)
-  mainSched.schedule( plotCluster, currentTick, EVERY_5_MINUTES, 0)
+  ##mainSched.schedule( plotLongWaterLevel8, currentTick, EVERY_HOUR, 0)
+  ##mainSched.schedule( plotCluster, currentTick, EVERY_5_MINUTES, 0)
   # do reports last as they contain resets
-  #mainSched.schedule( waterLevelReport15, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( waterLevelReport15, currentTick, EVERY_15_MINUTES, 0)
     # has a list index out of range error
-  mainSched.schedule( longWaterLevelReport15, currentTick, EVERY_15_MINUTES, 0)
-  mainSched.schedule( waveReport15, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( longWaterLevelReport15, currentTick, EVERY_15_MINUTES, 0)
+  ##mainSched.schedule( waveReport15, currentTick, EVERY_15_MINUTES, 0)
   # generate raw wave statistics report
 
   print "Initialization done"
   print "sampleTimeSeries",sampleTimeSeries
   print "spectraTimeSeries",spectraTimeSeries
 
-  print "currentTick", currentTick, "getCurrentTick()", getCurrentTick(1),
   ###MAIN LOOP
   #for _ in range (0, 3*60*60*30): #200000000): # limited test run
   while True: # until stopped...
@@ -1634,7 +1723,7 @@ def test():
     instantWaveHeight = currentLevel - waveBaseline
     waveHeights.append( instantWaveHeight)
     waveHeightHighLow.append( instantWaveHeight)
-    waveHeightTrap.append( instantWaveHeight)
+    ##waveHeightTrap.append( instantWaveHeight)
     instantWaveHeightAve = waveHeightAve.update( instantWaveHeight)
     waveHeightAves.append( instantWaveHeightAve)
     waveHeightStats.append( instantWaveHeight)
@@ -1672,20 +1761,40 @@ def test():
       ###NEW
 
     ###NEW
+    #if findWave2.findWave( currentTick, waveHeightAve2):
+    #  peak = findWave2.wavePeakToPeak
+    #  period = findWave2.wavePeriod
+    #  power = findWave2.wavePower
+    #  waves2.analyze( currentTick, peak, period, power, outChan)
+    #  waveTimes2.append( currentTick)
+    #  wavePeaks2.append( peak)
+    #  wavePeriods2.append( period)
+    #  wavePowers2.append( power)
+    #  wavePowerStats2.append( power)
+    #  wavePowerVariations2.append( wavePowerStats2.coefficientOfVariation)
+    
+    ###NEW
+
+    ###NEWERv ... move cluster logic up here
     if findWave2.findWave( currentTick, waveHeightAve2):
       peak = findWave2.wavePeakToPeak
       period = findWave2.wavePeriod
       power = findWave2.wavePower
-      waves2.analyze( currentTick, peak, period, power, outChan)
-      waveTimes2.append( currentTick)
-      wavePeaks2.append( peak)
-      wavePeriods2.append( period)
-      wavePowers2.append( power)
-      wavePowerStats2.append( power)
-      wavePowerVariations2.append( wavePowerStats2.coefficientOfVariation)
-    
       sendWave( currentTick, peak, period, power)
-    ###NEW
+      if waveCluster.isACluster( currentTick, peak, period, power): 
+        if clusterTaskID is not None:
+          unschedClusterEnd( clusterTaskID) # so it can be updated
+          clusterTaskID = None
+          sendClusterInternals( currentTick,
+                                waveCluster.energy,
+                                waveCluster.distance)
+        else:
+          waveCluster.reset( currentTick) # so it starts clean
+        waveCluster.update( currentTick, peak, period, power)
+        clusterTaskID = schedClusterEnd( reportCluster, currentTick,
+                config.CLUSTER_WINDOW)
+
+    ###NEWER^
 
     # resample wave height for spectral analysis
     sampleTimeSeries.evaluate ( currentTick, instantWaveHeight,

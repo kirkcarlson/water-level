@@ -31,6 +31,7 @@ import datetime
 
 from influxdb import InfluxDBClient
 
+import average
 import report
 import plot
 from config import CLUSTER_WINDOW
@@ -68,8 +69,7 @@ class Cluster( object):
     level: the current value
     trend: the current value trend (rising, falling, neutral)
     min: the minimum value during the period
-    max: the maximum value during the period
-    maxRiseRate: the maximum positive change during the period
+    max: the maximum value during the period maxRiseRate: the maximum positive change during the period
     maxFallRate: the maximum negative change during the period
     reversals: the number of trend reversals in the period
     startTick: epoch of consolidation (s)
@@ -82,6 +82,9 @@ class Cluster( object):
     """Return a LevelRegister object whose name is *name*."""
     self.name = name
     self.outChan = outChan
+    self.powerAverage = average.Average( "Wave Power Average", "nW?", 500)
+    # 500 with 1s waves implies about 8 minutes
+    # this maybe should also be at the main level...
     self.powerMultiplier = multiplier
     self.clusterTick = 0 # start time of a cluster arrival
     self.clusterGenTick = 0 # start time of when cluster was generated
@@ -115,38 +118,21 @@ class Cluster( object):
 
 
 
-  def reportDummy ( self):
-    """Dummy scheduling function for reporting a cluster end event"""
-    from main import currentTick, getCurrentTick
-    #from main import currentTick
-    #import main
 
-    getIt = getCurrentTick
-    print "reportDummy"
-    print "currentTick", currentTick
-    print "getCurrentTick()", getCurrentTick(1), getIt(1)
-    self.report( currentTick)
-
-
-  # would like a timed event for the end of the cluster to make the report more timely
-  # would have to modify the event due time with each new qualifying spike
 
   def report( self, tick):
     """Print a report summarizing the power spike cluster
     """
-    from main import currentTick
-    from main import getCurrentTick
 
-    print "tick", tick, "self.clusterTick", self.clusterTick
-    print "currentTick", currentTick
-    print "getCurrentTick()", getCurrentTick(1)
     self.outChan.prEvent( tick , # this marks end of cluster
                           self.name,
-                          "cluster end energy: {:.1f} max power: {:4.1f} duration: {:.1f} "\
+                          "Cluster energy: {:.1f} "+\
+                              "duration: {:.1f} "+\
+                              "max power: {:4.1f} "+\
                               "max period: {:.1f}".format(
                                   self.energy,
-                                  self.maxPower,
                                   tick - self.clusterTick,
+                                  self.maxPower,
                                   self.maxPeriod),
                            report.VERB_DEBUG)
 
@@ -157,15 +143,22 @@ class Cluster( object):
                            'period': self.maxPeriod,
                            'energy': self.energy,
                          } )
+    sendClusterEvent( tick=tick,
+                      distance=self.distance+0.,
+                      period=self.maxPeriod+0.,
+                      energy=self.energy+0. #####guessing here...
+                    )
 
+    #NOW OBSOLETE
     # reset accumulators for the cluster
-    self.energy = 0.
-    self.maxPower = 0.
-    self.maxPowerTick = 0
-    self.maxPeriod = 0.
-    self.maxPeriodTick = 0
-    self.processID = None # assume that this was called by the scheduler
+    #self.energy = 0.
+    #self.maxPower = 0.
+    #self.maxPowerTick = 0
+    #self.maxPeriod = 0.
+    #self.maxPeriodTick = 0
+    #self.processID = None # assume that this was called by the scheduler
 
+  ''' OBSOLETE
   def analyzePower( self, tick, power, period, powerAverage):
     """Analyze the power spike for inclusion in cluster
   
@@ -176,7 +169,8 @@ class Cluster( object):
       powerAverage: (float) average power over the long term
     
     Returns:
-      None, although the register object is updated
+      True if wave qualifies as a cluster
+      False if wave does not qualify as a cluster
     
     Raises:
       None
@@ -195,7 +189,7 @@ class Cluster( object):
                               report.VERB_DEBUG)
         self.clusterTick = tick
         self.maxPower = power
-        self.maxTick = tick
+        self.maxPowerTick = tick
         self.energy = 0
       self.energy = self.energy + (power * period)
       if power >= self.maxPower:
@@ -203,6 +197,104 @@ class Cluster( object):
         self.maxPower = power
       self.processID = schedClusterEnd (self.reportDummy, tick,
                                         CLUSTER_WINDOW)
+'''
+
+  def isACluster( self, tick, peak, period, power):
+    """should the current wave be part of a cluster
+  
+    Args:
+      tick: (float) epoch associated with the level
+      power: (float) amount of power for the current wave
+      period: length (s) of the current wave
+      power: (float) power of the current wave
+    
+    Returns:
+      True if wave qualifies as a cluster
+      False if wave does not qualify as a cluster
+    
+    Raises:
+      None
+    """
+
+    if self.powerAverage.average is None: # first time, seed ave
+      self.powerAverage.update(power) 
+      return False
+    else:
+      if power < self.powerMultiplier * self.powerAverage.average:
+        self.powerAverage.update(power) 
+        sendPowerThreshold( tick, self.powerMultiplier *
+                            self.powerAverage.average)
+        return False
+      else: #it is a cluster...
+        self.energy = self.energy + (power * period)
+        if power >= self.maxPower:
+          self.maxPowerTick = tick
+          self.maxPower = power
+        return True
+
+
+  def reset( self, tick):
+    """reset the statistics for a cluster
+  
+    Args:
+      tick: float epoch associated start of cluster (end of first wave?)
+    
+    Returns:
+      None, although the register object is updated
+    
+    Raises:
+      None
+    """
+    self.clusterTick = tick
+    self.maxPower = 0
+    self.maxPowerTick = tick
+    self.maxPeriod = 0
+    self.maxPeriodTick = tick
+    self.energy = 0
+
+
+  def update( self, tick, peak, period, power):
+    """update the statistics for a cluster
+  
+    Args:
+      tick: float epoch associated start of cluster (end of first wave?)
+      peak: peak to peak wave height in inches
+      period: in seconds
+      power: in nW?
+    
+    Returns:
+      None, although the register object is updated
+    
+    Raises:
+      None
+    """
+    if power > self.maxPower:
+      self.maxPower = power
+      self.maxPowerTick = tick
+    self.energy = self.energy + power * period # energy is power * time
+
+    waveSpeed = 32/6.28 * period
+    self.waveLength = waveSpeed * period
+
+    distance = 0
+    if period < self.maxPeriod:
+      maxPeriodWaveSpeed = 32/6.28 * self.maxPeriod
+      distance =  (tick - self.maxPeriodTick) * waveSpeed /\
+                  (maxPeriodWaveSpeed - waveSpeed)
+      if distance > MAX_DISTANCE_LIMIT:
+        distance = MAX_DISTANCE_LIMIT
+      if distance > self.distance:
+        self.distance = distance
+      
+      self.outChan.prEvent( tick , # this marks begin of event
+                            self.name,
+                            "Period {:.1f}s wavespeed: {:.1f} ft/s wavelength "\
+                                "{:.1f} distance {:.0f}".format(
+                                    period, waveSpeed, self.waveLength, distance),
+                            report.VERB_DEBUG)
+    if period > self.maxPeriod:
+      self.maxPeriod = period
+      self.maxPeriodTick = tick
 
 
   def analyzePeriod( self, tick, period):
@@ -243,11 +335,6 @@ class Cluster( object):
                                 "{:.1f} distance {:.0f}".format(
                                     period, waveSpeed, self.waveLength, distance),
                             report.VERB_DEBUG)
-      sendClusterEvent( time=tick,
-                        distance=distance,
-                        period=self.maxPeriod,
-                        energy=self.energy #####guessing here...
-                      )
       if period > self.maxPeriod:
         self.maxPeriod = period
         self.maxPeriodTick = tick
@@ -310,6 +397,22 @@ class Cluster( object):
     self.events = self.events [-period:]
 
 
+  '''
+  def reportDummy ( self, currentTime):
+    """Dummy scheduling function for reporting a cluster end event"""
+    from main import currentTick, getCurrentTick
+    #from main import currentTick
+    #import main
+
+    getIt = getCurrentTick
+    #print "reportDummy"
+    #print "currentTick", currentTick
+    print "report Dummy getCurrentTick()", getCurrentTick(1), getIt(1), currentTime
+    self.report( currentTime)
+
+  # would like a timed event for the end of the cluster to make the report more timely
+  # would have to modify the event due time with each new qualifying spike
+  '''
 #### FUNCTIONS ####
 
 '''
@@ -324,7 +427,23 @@ outline:
     for high traffic times may need to track multiple highPeriods within a cluster at a time
 '''
 
-def sendClusterEvent( time, distance, period, energy ):
+def sendPowerThreshold ( tick, power):
+  json_body = []
+  json_body.append (
+    {
+      "measurement" : "clusterInternal",
+      "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
+                datetime.datetime.fromtimestamp(tick)),
+      "fields" : {
+        "threshold" : power+0.
+      }
+    }
+  )
+  if not client.write_points(json_body):
+    print "Not updating database"
+
+
+def sendClusterEvent( tick, distance, period, energy ):
   """send cluster event to the InfluxDB server
 
   Args:
@@ -338,21 +457,11 @@ def sendClusterEvent( time, distance, period, energy ):
   """
 
   # send measurements to the influxdb
-
-  walltime = datetime.datetime.now()
-  daydiff = (walltime - datetime.datetime.fromtimestamp(time)).days
-  tickDiff = daydiff * 24 * 3600 # offset to yesterday for now
-  #offsetTick = time + tickDiff # offset to yesterday for now
-  offsetTick = time # no offset
-
-  json_body = []
-  # should only do the following once...
-  
   json_body = [
     {
       "measurement" : "cluster",
       "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
-                datetime.datetime.fromtimestamp(offsetTick)),
+                datetime.datetime.fromtimestamp(tick)),
       "fields" : {
         'distance': distance+0.,
         'period': period+0.,

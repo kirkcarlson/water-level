@@ -129,7 +129,7 @@ WAVE_PERIOD_CUTOFF = 100 # seconds
 
 #cluster configuration
 CLUSTER_WINDOW = 3 # sec
-CLUSTER_MULTIPLIER = 5 # anomalous trigger for start of cluster
+CLUSTER_MULTIPLIER = 1.5 # anomalous trigger for start of cluster
 MAX_DISTANCE_LIMIT = 5000 # feet
 
 # constants for power conversion

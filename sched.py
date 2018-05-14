@@ -123,16 +123,17 @@ class Schedule (object):
         #print "execute popping", i, tasks
         dueTask = self.tasks.pop(i)
         #print tasks
-        dueTask['function']() # execute the task
-        if dueTask['period'] > 0: # recurring task
-          due = nextDue (tick, dueTask['period'], dueTask['offset'])
-          self.tasks.append ( {
-              'processID': dueTask['processID'],
-              'function':  dueTask['function'],
-              'period':    dueTask['period'],
-              'offset':    dueTask['offset'],
-              'due':       due
-          })
+        if dueTask['function'] is not None:
+          dueTask['function']( tick) # execute the task
+          if dueTask['period'] > 0: # recurring task
+            due = nextDue (tick, dueTask['period'], dueTask['offset'])
+            self.tasks.append ( {
+                'processID': dueTask['processID'],
+                'function':  dueTask['function'],
+                'period':    dueTask['period'],
+                'offset':    dueTask['offset'],
+                'due':       due
+            })
  
 
 #### FUNCTIONS ####
