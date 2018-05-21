@@ -72,7 +72,7 @@ DESIRED_PERIOD = 1./SAMPLES_PER_SECOND #second for measurement stream
 # FFTtargetPeriods are the high level sample periods
 #                  1    2    3    4    5    6    7    8    9   10   11   12
 BOAT_LENGTHS =  [  6,   8,  10,  12,  14,  16,  18,  20,  22,  24,  26,  28,
-                   30, 32,  34,  36,  38,  40]
+                   30, 32,  34,  36,  38,  40,  42,  44,  46,  48,  50]
 TARGET_PERIODS =   [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8,\
                     3.0, 3.4, 3.6, 3.8, 4.0, 4.4, 4.8, 5.2, 5.6, 6.0, 6.4,\
                     6.8, 7.2, 7.6, 8.0, 8.8, 9.6, 10.4, 11.2, 12.0, 12.8,\
@@ -126,6 +126,14 @@ WAVE_PERIOD_CUTOFF = 3 # seconds
 PEAK_THRESHOLD = 0. # inches
 WAVE_PERIOD_THRESHOLD = 0 # seconds
 WAVE_PERIOD_CUTOFF = 100 # seconds
+
+#spectrum graphing configuration
+SEND_START_RESPONSES = False # include the spectrum where responses are timed
+                             # to the start of the sample with the frequency
+                             # response.
+                             # The current normal is the time is at the end of
+                             # the sample.
+
 
 #cluster configuration
 CLUSTER_WINDOW = 3 # sec

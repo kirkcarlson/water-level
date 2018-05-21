@@ -39,8 +39,8 @@ from config import NORMALIZATION_METHOD
 
 #Notes
 
-#There is a one to one relationship between a sample object and a spectrum
-#object. The group of samples is maintained to feed the new samples as they
+#There is a one to one relationship between a resample object and a spectrum
+#object. The group of resamples is maintained to feed the new samples as they
 #arrive. The group of spectra is maintained for analyzing, reporting, plotting
 #and monitoring.
 
@@ -49,6 +49,7 @@ from config import NORMALIZATION_METHOD
 #in its entirety.
 
 #'freshen' isn't quite the right word. It is releasing older list members
+
 
 
 #### CLASSES ####
@@ -110,6 +111,7 @@ class Resamples (object):
     """Release unnecessary items from lists
 
     Args:
+     numberOfSamples: number of samples to retain
   
     Returns:
       None
@@ -152,7 +154,7 @@ class Resample (object):
     samplesPerCycle = math.floor( 2**(RESOLUTION + 1)) # +1 for Nyquest rate
     # make sure the resampling rate is less than sampling rate
     if cyclePeriod < 1. / SAMPLES_PER_SECOND:
-      print "Cannot accodate cyclePeriod =", cyclePeriod
+      print "Cannot accomodate cyclePeriod =", cyclePeriod
       # this should raise an error
     else:
       #print "check", cyclePeriod, samplesPerCycle, SAMPLES_PER_SECOND, \
@@ -231,7 +233,7 @@ class Resample (object):
 
 #### FUNCTIONS ####
 
-def interpolate(desiredTick, currentTick, currentValue, lastTick, lastValue):
+def interpolate( desiredTick, currentTick, currentValue, lastTick, lastValue):
   """Determines a sampled value between two measurements
 
   This uses desiredTick to get the proportion of time between the last and

@@ -209,8 +209,7 @@ class Spectrum( object):
     """
 
     if len( self.responses) > responsesToKeep:
-      self.responses = self.responses[ -responsesToKeep]
-
+      self.responses = self.responses[ -responsesToKeep:]
 
 
 #### GLOBALS ####

@@ -65,7 +65,7 @@ class Level( object):
     self.levels = []
     self.stats = stats.Stats( aveConfig)
     self.watch = watch.Watch( name, seed, tick, hysteresis)
-    self.waveHeights = []
+    #self.waveHeights = []
 # want to pass a list of named average periods. [(name,period),...]
 # if the list length is zero, no need for stats
 # otherwise there should be stats for each period
@@ -93,7 +93,7 @@ class Level( object):
     self.watch.analyze( tick, level, reportChan)
 
     if len( self.stats.averages) >= 2:
-      waveHeight = level - self.stats.averages[1][-1]
+      ##waveHeight = level - self.stats.averages[1][-1]
       # waveHeight = level - self.stats.averages[1][-1]
       # the above is too noisy, the level is too high a frequency so it messes
       # up the period.
@@ -103,7 +103,8 @@ class Level( object):
       # results in some very funny waves with very long periods when the water
       # level is changing... so medium should be the zero crossing value and
       # the long should only be used for the water level
-      self.waveHeights.append( waveHeight)
+      ##self.waveHeights.append( waveHeight)
+      pass # looks like something may have disappeared
        
 
   def report( self, currentTick, reportChan):
@@ -139,7 +140,7 @@ class Level( object):
     self.times = self.times [-period:]
     self.levels = self.levels [-period:]
     self.stats.freshen( period)
-    self.waveHeights = self.waveHeights [-period:]
+    ##self.waveHeights = self.waveHeights [-period:]
 
 
   def plotLevels (self, numberToPlot, name):
@@ -163,6 +164,7 @@ class Level( object):
     plot.plotCommon( name, numberToPlot, self.times, 'Water Level (in)', lines)
   
 
+  '''OBSOLETE
   def plotWaveHeights (self, numberToPlot, name):
     """Plot the wave height.
   
@@ -188,6 +190,7 @@ class Level( object):
     ]
     times = self.times
     plot.plotCommon( name, numberToPlot, times, 'Wave Height (in)', lines)
+  '''
 
 
   def test(self):
@@ -239,7 +242,7 @@ class Level( object):
     self.plotWaveHeights (len(tests)-2, "Wave Height")
     self.freshen (3)
     print self.__dict__
-    self.plotWaveHeights (len(tests), "Wave Height2")
+    ##self.plotWaveHeights (len(tests), "Wave Height2")
     #pylint: enable=too-many-function-args
 
 

@@ -29,11 +29,10 @@ THE SOFTWARE.
 
 import datetime
 
-from influxdb import InfluxDBClient
-
 import average
 import report
-import plot
+import influx
+#import plot
 from config import CLUSTER_WINDOW
 from config import CLUSTER_MULTIPLIER
 from config import MAX_DISTANCE_LIMIT
@@ -97,7 +96,7 @@ class Cluster( object):
     self.energy = 0
     self.waveLength = 0 # also maximum wave length
 
-    self.events = []
+    #self.events = []
     #this is an array of:
     #             { # cluster event with the following attributes
     #               'time': None
@@ -106,15 +105,6 @@ class Cluster( object):
     #               'energy': None
     #             }
 
-    # initialize influxdb channel
-    client = InfluxDBClient(host='localhost', port=8086)
-    databaseName = "waterlevel"
-    if databaseName not in client.get_list_database():
-      client.create_database( databaseName)
-      client.create_retention_policy("keep forever", "INF", 1,
-              database=databaseName)
-
-    client.switch_database( databaseName)
 
 
 
@@ -137,17 +127,15 @@ class Cluster( object):
                            report.VERB_DEBUG)
 
     # add the cluster to the log of events
-    self.events.append ( { 'time': self.clusterTick,
-                           'distance': self.distance,
-                           #'boatLength': self.boatLength,
-                           'period': self.maxPeriod,
-                           'energy': self.energy,
-                         } )
-    sendClusterEvent( tick=tick,
-                      distance=self.distance+0.,
-                      period=self.maxPeriod+0.,
-                      energy=self.energy+0. #####guessing here...
-                    )
+    #self.events.append ( { 'time': self.clusterTick,
+    #                       'distance': self.distance,
+    #                       #'boatLength': self.boatLength,
+    #                       'period': self.maxPeriod,
+    #                       'energy': self.energy,
+    #                     } )
+    influx.sendMeasurementLevel( tick, "cluster", "distance", self.distance+0)
+    influx.sendMeasurementLevel( tick, "cluster", "period", self.maxPeriod+0)
+    influx.sendMeasurementLevel( tick, "cluster", "energy", self.energy+0)
 
     #NOW OBSOLETE
     # reset accumulators for the cluster
@@ -220,12 +208,15 @@ class Cluster( object):
       self.powerAverage.update(power) 
       return False
     else:
-      if power < self.powerMultiplier * self.powerAverage.average:
-        self.powerAverage.update(power) 
-        sendPowerThreshold( tick, self.powerMultiplier *
-                            self.powerAverage.average)
+      self.powerAverage.update(power) 
+      threshold = self.powerMultiplier * self.powerAverage.average
+      influx.sendMeasurementLevel( tick, "cluster", "threshold", threshold)
+
+      if power < threshold: # it is not a cluster
+        #self.powerAverage.update(power) 
+        #sendPowerThreshold( tick, threshold)
         return False
-      else: #it is a cluster...
+      else: # it is a cluster...
         self.energy = self.energy + (power * period)
         if power >= self.maxPower:
           self.maxPowerTick = tick
@@ -343,6 +334,7 @@ class Cluster( object):
 ###CHANGE OF STRATEGY... send arrays of numbers to plot routine and let it figure out
 ### colors, shapes, positions, etc.
 
+  '''OBSOLETE
   def plot(self, numberToPlot, plotName):
     """ Plot the distance and size against time of power spike clusters
 
@@ -380,6 +372,7 @@ class Cluster( object):
           periods.append( event['period'])
   
         plot.plotCluster (plotName, numberToPlot, times, distances, periods, energys)
+  '''
 
 
   def freshen(self, period):
@@ -427,51 +420,6 @@ outline:
     for high traffic times may need to track multiple highPeriods within a cluster at a time
 '''
 
-def sendPowerThreshold ( tick, power):
-  json_body = []
-  json_body.append (
-    {
-      "measurement" : "clusterInternal",
-      "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
-                datetime.datetime.fromtimestamp(tick)),
-      "fields" : {
-        "threshold" : power+0.
-      }
-    }
-  )
-  if not client.write_points(json_body):
-    print "Not updating database"
-
-
-def sendClusterEvent( tick, distance, period, energy ):
-  """send cluster event to the InfluxDB server
-
-  Args:
-    None
-  
-  Returns:
-    None
-  
-  Raises:
-    None
-  """
-
-  # send measurements to the influxdb
-  json_body = [
-    {
-      "measurement" : "cluster",
-      "time": "{0:%Y-%m-%dT%H:%M:%S.%fZ-04}".format(
-                datetime.datetime.fromtimestamp(tick)),
-      "fields" : {
-        'distance': distance+0.,
-        'period': period+0.,
-        'energy': energy+0.,
-      }
-    }
-  ]
-  if not client.write_points(json_body):
-    print "Not updating database"
-      
 
 '''
 def dummy():
