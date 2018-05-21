@@ -156,24 +156,6 @@ MAX_DISTANCE_LIMIT = 5000 # feet
 POWER_CONSTANT = 999 * 6.67385 * 6.67385 / 16 / math.pi / 100 *.0254 * .0254
 GRAVITY_CONSTANT =  32.174 # ft/s/s
 
-# plot configuration
-# LENGTH_COLORS define the colors for scatter plot colors of boats
-#         boat length, color character
-LENGTH_COLORS = [ (16, "r"),
-                  (20, "m"),
-                  (24, "c"),
-                  (28, "b"),
-                  (32, "g"),
-                  (36,"k") ]
-# ENERGY_SIZES define the size of scatter plot circles based on energy
-# thresholds
-#             energy, size
-ENERGY_SIZES = [ (10, 32),
-                 (15, 64),
-                 (20, 128),
-                 (25, 256),
-                 (30, 384),
-                 (35, 512) ]
 
 # resample configuration
 RESOLUTION = 7 # number of bits resolution for frequency samples

@@ -199,10 +199,10 @@ class Resample (object):
 
     #print "resample", self.resamplingPeriod, value, len( self.levels)
     while tick > self.resamplingDueTick: # this should not loop, but in case
-      #print "resample adding:", interpolate (self.resamplingDueTick, tick, \
+      #print "resample adding:", interpolate( self.resamplingDueTick, tick, \
       #    value, lastTick, lastValue), self.resamplingDueTick, tick, value, \
       #    lastTick, lastValue
-      self.levels.append( interpolate (self.resamplingDueTick, tick, value,
+      self.levels.append( interpolate( self.resamplingDueTick, tick, value,
                                        lastTick, lastValue) )
       self.lastTime = self.resamplingDueTick # time of last resample
       self.resamplingDueTick = self.resamplingDueTick + self.resamplingPeriod

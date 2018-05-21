@@ -32,7 +32,6 @@ import datetime
 import average
 import report
 import influx
-#import plot
 from config import CLUSTER_WINDOW
 from config import CLUSTER_MULTIPLIER
 from config import MAX_DISTANCE_LIMIT
@@ -329,50 +328,6 @@ class Cluster( object):
       if period > self.maxPeriod:
         self.maxPeriod = period
         self.maxPeriodTick = tick
-
-
-###CHANGE OF STRATEGY... send arrays of numbers to plot routine and let it figure out
-### colors, shapes, positions, etc.
-
-  '''OBSOLETE
-  def plot(self, numberToPlot, plotName):
-    """ Plot the distance and size against time of power spike clusters
-
-    Args:
-      numberToPlot: number of seconds to plot
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-
-    print "Plotting cluster"
-    # find the number of points to plot, given the number of seconds
-    if len(self.events) > 1:
-      endTime = self.events[-1]["time"]
-      startTime = endTime - numberToPlot
-      numberToPlot = len(self.events)
-      for event in self.events:
-        if event['time'] > startTime:
-          break
-        numberToPlot = numberToPlot - 1
-      print "Plotting cluster", numberToPlot
-      if numberToPlot > 0:
-        times = []
-        distances = []
-        energys = []
-        periods = []
-        for event in self.events [-numberToPlot:]: 
-          times.append( event['time'])
-          distances.append( event['distance'])
-          energys.append( event['energy'])
-          #boatLengths.append( event['boatLength'])
-          periods.append( event['period'])
-  
-        plot.plotCluster (plotName, numberToPlot, times, distances, periods, energys)
-  '''
 
 
   def freshen(self, period):

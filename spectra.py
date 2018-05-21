@@ -37,7 +37,6 @@ from numpy import arange               # for FFT
 #import scipy.fftpack                   # for FFT
 
 import resamples                       # resampled values
-import plot
 
 from config import GRAVITY_CONSTANT
 from config import TARGET_PERIODS
@@ -426,16 +425,6 @@ def test ():
       #print "End of iSample", iSample, iPeriod, iPulse, sampleNumber
     #print "End of iPeriod", iSample, iPeriod, iPulse, sampleNumber
   #print "End of iPulse", iSample, iPeriod, iPulse, sampleNumber
-
-
-  # common setup for plotting
-  currentDateTime = datetime.datetime.now()
-  currentTimeString = currentDateTime.strftime( "%Y.%m.%d_%H.%M.%S.%f")[:-3]
-
-  plot.plotFrequencyResponse( testSpectra, 0, 13, .8*sampleNumber,
-                              currentTimeString, "Wake Presponse Test")
-  plot.plotFrequencyResponse( testSpectra, 14, 51, .8*sampleNumber,
-                              currentTimeString, "Wave Presponse Test")
   # pylint: enable=too-many-locals
 
 

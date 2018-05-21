@@ -28,7 +28,6 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
-import plot
 import report
 import stats
 import watch
@@ -105,23 +104,6 @@ class Series( object):
     """
     self.values = self.values [-numberToKeep:]
 
-
-  def getLine (self, numberToPlot):
-    """get a line for plotting from the time series
-  
-    Args:
-      numberToPlot: integer number of data elements to include
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    line = {'points':self.values[-numberToPlot:], 'label':self.name}
-    return line
-  
 
   def _test_(self):
     """Test the functions and methods in this module.

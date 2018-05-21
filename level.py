@@ -28,7 +28,6 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
-import plot
 import report
 import stats
 import watch
@@ -143,56 +142,6 @@ class Level( object):
     ##self.waveHeights = self.waveHeights [-period:]
 
 
-  def plotLevels (self, numberToPlot, name):
-    """Plot the water level and averages.
-  
-    Args:
-      numberToPlot: integer number of data elements to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    lines = []
-    lines.append ({'points':self.levels,           'label':'Water Level'})
-    for i, averages in enumerate(self.stats.averages):
-      lines.append( {'points':averages,  'label':self.stats.aveConfig[i][0]} )
-    plot.plotCommon( name, numberToPlot, self.times, 'Water Level (in)', lines)
-  
-
-  '''OBSOLETE
-  def plotWaveHeights (self, numberToPlot, name):
-    """Plot the wave height.
-  
-    Args:
-      numberToPlot: integer number of data elements to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    # plot the data points
-    #print "plotWH:",self.waveHeights
-    lines = [
-        {'points':self.waveHeights,               'label':'Wave Heights'},
-        #{'points':self.stats.standardDeviations,
-        # 'label':'Standard Deviation'},
-        #{'points':self.stats.coefficientOfVariations,
-        # 'label':'Coefficient of variation'}
-    ]
-    times = self.times
-    plot.plotCommon( name, numberToPlot, times, 'Wave Height (in)', lines)
-  '''
-
-
   def test(self):
     """Test the functions and methods in this module.
   
@@ -235,14 +184,10 @@ class Level( object):
       # this needs to be updated to use self.analyze(tick,level, reportChan)
       self.analyze( testdata['tick'], testdata['level'], reportChan)
 
-    # generate plots
     print self.__dict__
     #pylint: disable=too-many-function-args
-    self.plotLevels (len(tests)+2, "Raw Level Test")
-    self.plotWaveHeights (len(tests)-2, "Wave Height")
     self.freshen (3)
     print self.__dict__
-    ##self.plotWaveHeights (len(tests), "Wave Height2")
     #pylint: enable=too-many-function-args
 
 
