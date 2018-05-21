@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8
 # coding=utf8
 """
-rawwaves - module for holding the rawwaves
+wave - module for holding wave data
 
 Copyright (c) 2016-2018 Kirk Carlson, All Rights Reserved
 
@@ -27,7 +27,6 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
-import plot
 import stats
 import watch
 #import cluster
@@ -38,12 +37,12 @@ import watch
 #### CLASSES ####
 
 # pylint: disable=too-many-instance-attributes
-class RawWaves (object):
-  """Raw waves."""
+class Wave (object):
+  """Wave."""
 
 
   def __init__ (self, tick):
-    """Return a RawWaves object.
+    """Return a Wave object.
   
     Args:
       None
@@ -65,8 +64,6 @@ class RawWaves (object):
     self.powers = stats.Stats([ ("Short",2), ("Medium", 3*30)]) # 3 seconds
     self.powerwatch = watch.Watch("Wave power", 0, tick, 10)
     reportChan = report.ReportChannel("")
-    #self.cluster = cluster.Cluster("Wave cluster", reportChan,
-    #                               CLUSTER_MULTIPLIER)
 
 
 #pylint: disable=too-many-arguments
@@ -94,11 +91,7 @@ class RawWaves (object):
     self.periods.analyze(period)
     self.powerwatch.analyze(tick, power, reportChan)
     self.powers.analyze(power)
-    #self.cluster.analyzePower( tick, power, period,
-    #                           self.powers.averages[1][-1])
-    #return self.cluster.analyzePeriod( tick, period)
 #pylint: enable=too-many-arguments
-
 
 
   def report (self, tick, reportChan):
@@ -138,129 +131,7 @@ class RawWaves (object):
     self.peaks.freshen(period)
     self.periods.freshen(period)
     self.powers.freshen(period)
-    #self.cluster.freshen( period)
 
-
-  def plotWavePeaks (self, timeToPlot, name):
-    """plot the wave peaks and averages
-  
-    Args:
-      timeToPlot: integer number of seconds to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    lines = [
-        {'points':self.peaks.values,     'label':'Wave Peaks'},
-        {'points':self.peaks.averages[0],  'label':'Short Average'}#,
-        #{'points':self.peaks.averages[1], 'label':'Medium Average'},
-        #{'points':self.peaks.averages[2],   'label':'Long Average'}
-    ]
-    print len(self.times), len(lines[0]['points'])
-    plot.plotTimeCommon( name, timeToPlot, self.times, 'Wave Height (in)',
-                         lines)
-  
-
-  def plotWavePeriods (self, timeToPlot, name):
-    """plot the wave periods and averages
-  
-    Args:
-      timeToPlot: integer number of seconds to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    lines = [
-        {'points':self.periods.values,     'label':'Wave Periods'},
-        {'points':self.periods.averages[0],  'label':'Short Average'}#,
-        #{'points':self.periods.averages[1], 'label':'Medium Average'},
-        #{'points':self.periods.averages[2],   'label':'Long Average'}
-    ]
-    plot.plotTimeCommon( name, timeToPlot, self.times, 'Wave Period (s)',
-                         lines)
-  
-
-  def plotWavePower (self, timeToPlot, name):
-    """plot the wave power and averages
-  
-    Args:
-      timeToPlot: integer number of seconds to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    lines = [
-        {'points':self.powers.values,     'label':'Wave Power'},
-        {'points':self.powers.averages[0],  'label':'Short Average'}#,
-        #{'points':self.powers.averages[1], 'label':'Medium Average'},
-        #{'points':self.powers.averages[2],   'label':'Long Average'}
-    ]
-    plot.plotCommon( name, timeToPlot, self.times, 'Wave Power (nW/ft)', lines)
-  
-
-  def plotWaveStandardDeviation (self, numberToPlot, name):
-    """Plot the wave standard deviations.
-  
-    Args:
-      numberToPlot: integer number of data elements to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    # plot the data points
-    lines = [
-        {'points':self.peaks.standardDeviations,   'label':'Peak'},
-        {'points':self.periods.standardDeviations, 'label':'Period'},
-        {'points':self.powers.standardDeviations,  'label':'Power'},
-    ]
-    print lines
-    print self.times
-    plot.plotCommon( name, numberToPlot, self.times, 'Standard Deviation (in)',
-                     lines)
-
-
-  def plotWaveCoefficientOfVariation (self, numberToPlot, name):
-    """Plot the coefficient of variation.
-  
-    Args:
-      numberToPlot: integer number of data elements to plot
-      name: string used for the saved filename
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-      
-    # plot the data points
-    lines = [
-        {'points':self.peaks.coefficientOfVariations,   'label':'Peak'},
-        {'points':self.periods.coefficientOfVariations, 'label':'Period'},
-        {'points':self.powers.coefficientOfVariations,  'label':'Power'}
-    ]
-    plot.plotCommon( name, numberToPlot, self.times,
-                     'Coefficient of variation', lines) 
 
   def test(self):
     """Test the functions and methods of this module.
@@ -293,26 +164,13 @@ class RawWaves (object):
       self.analyze( **testdata )
       #self.analyze( tick, peak, period)
 
-    # generate plots
-    print "ploting peaks"
-    self.plotWavePeaks (15*60, "Wave Peak")
-    print "ploting periods"
-    self.plotWavePeriods (15*60, "Wave Period")
-    print "ploting power"
-    self.plotWavePower (15*16, "Wave Power")
-    print "ploting CV"
-    self.plotWaveCoefficientOfVariation (len(tests),
-                                         "Wave coefficient of variation")
-    print "ploting standard deviation"
-    self.plotWaveStandardDeviation (len(tests), "Wave Standard Deviation")
 
     print "testing freshen"
     self.freshen (3)
-    self.plotWavePeaks (len(tests), "Wave Peak2")
 # pylint: enable=too-many-instance-attributes
 
 
 if __name__ == "__main__":
   # execute only if run as a script
-  RW = RawWaves(0) 
+  RW = Waves(0) 
   RW.test()

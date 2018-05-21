@@ -139,16 +139,17 @@ import json
 import sched
 import config
 import cluster
+import dominant
 import findwave
 import inputchan
 import influx
 import level
 #import plot
-import rawwaves
 import report
 import resamples
 import spectra
 #import stats
+import wave
 
 
 ###NEW
@@ -201,7 +202,8 @@ mainSched = sched.Schedule()
 waterLevel = None
 longWaterTicks = None
 longWaterLevelHiLoTicks = None
-waves = None
+rawWave = None
+dominantPeriod = None
 sampleTimeSeries = None
 spectraTimeSeries = None
 
@@ -224,7 +226,7 @@ waveHeightWeeklyHighLow = None
 waveHeightMonthlyHighLow = None
 waveHeightAve = None
 waveHeightStats = None
-waves2 = None
+rawWave2 = None
 wavePowerStats = None
 wavePowerStats2 = None
 waveCluster = None
@@ -360,7 +362,7 @@ def updateLongWaterLevel( currentTime):
   from influx import influxWrites
 
   longAve = longWaterLevelAve.average
-  print "{0:%Y-%m-%dT%H:%M:%S.%fZ-04 updateLongWaterLevels {1}}"\
+  print "{0:%Y-%m-%dT%H:%M:%S.%f-0400 updateLongWaterLevels {1}}"\
       .format( datetime.datetime.fromtimestamp(currentTick),
                influx.influxWrites)
   influx.influxWrites = 0
@@ -522,10 +524,10 @@ def waveReport15( currentTime):
     None
   """
 
-  waves.report( currentTime, outChan)
-  Awaves.peakwatch.reset( currentTime) # other periods will want their own watch
-  waves.periodwatch.reset( currentTime)
-  waves.powerwatch.reset( currentTime) 
+  rawWave.report( currentTime, outChan)
+  rawWave.peakwatch.reset( currentTime) # other periods will want their own watch
+  rawWave.periodwatch.reset( currentTime)
+  rawWave.powerwatch.reset( currentTime) 
 
 
 def doFFTs( currentTime):
@@ -630,6 +632,7 @@ def sendLimitedFftSamples():
   boatLength = 0
   period = 0
   
+  # find the dominant response by wavelength and period
   for spectrum in spectraTimeSeries.spectra:
     if len( spectrum.responses) >= 1:
       response = spectrum.responses[-1]
@@ -669,6 +672,7 @@ def sendLimitedFftSamples():
                                        period,
                                        "startPeriodicResponse",
                                        spectraResponse)
+  dominantPeriod.update( period, spectraResponse)
       
 
 def schedClusterEnd( someFunction, currentTime, period):
@@ -729,8 +733,9 @@ def test():
   global tickDiff
 
   global waterLevel
-  global waves
-  global waves2
+  global rawWave
+  global rawWave2
+  global dominantPeriod
   global sampleTimeSeries
   global spectraTimeSeries
 
@@ -793,12 +798,13 @@ def test():
                           )
 
   findWave = findwave.FindWave() # determine wave peaks and periods
+  dominantPeriod = dominant.Dominant() # determine dominant Period and response
 
   instantWaveHeight = 0
-  waves = rawwaves.RawWaves( currentTick) # wave height time series
+  rawWave = wave.Wave( currentTick) # wave height time series
                                           # (not sure this is used...)
   longWaterLevels = []
-  waves2 = rawwaves.RawWaves( currentTick) # filtered wave height time series
+  rawWave2 = wave.Wave( currentTick) # filtered wave height time series
   findWave2 = findwave.FindWave() # determine need wave peaks
   longWaterLevelAve = average.Average( "Averaged Water Level", "in",
                                        config.LONG_AVE_SAMPLES)
@@ -894,29 +900,37 @@ def test():
     lastWaveHeight = instantWaveHeight
     currentTick, currentLevel = inChan.getWaterLevel( currentTick)
     #currentTick, currentLevel = inChan.readLevel( currentTick)
+    '''
     influx.sendMeasurementLevel( currentTick,
                                  "waterLevel",
                                  "waterLevel",
                                  currentLevel)
+    '''
 
     longWaterLevelAve.update( currentLevel)
     waveBaseLine = medWaterLevelAve.update( currentLevel)
+    '''
     influx.sendMeasurementLevel( currentTick,
                                  "waterLevel",
                                  "waveBaseLine",
                                  waveBaseLine)
+    '''
 
     instantWaveHeight = currentLevel - waveBaseLine
+    '''
     influx.sendMeasurementLevel( currentTick,
                                  "waterLevel",
                                  "waveHeight",
                                  instantWaveHeight)
+    '''
 
     instantWaveHeightAve = waveHeightAve.update( instantWaveHeight)
+    '''
     influx.sendMeasurementLevel( currentTick,
                                  "waterLevel",
                                  "aveWaveHeight",
                                  instantWaveHeightAve)
+    '''
     waveHeightAve2 = waveHeightLowPass.append( instantWaveHeight)
     waveHeightStats.append( instantWaveHeight)
     # this really doesn't do what you want:
@@ -928,17 +942,27 @@ def test():
       peak = findWave.wavePeakToPeak
       period = findWave.wavePeriod
       power = findWave.wavePower
-      waves.analyze( currentTick, peak, period, power, outChan)
+      rawWave.analyze( currentTick, peak, period, power, outChan) # what is this doing?
 
       wavePowerStats.append( power)
+      # want to reset dominant wave period here
 
     if findWave2.findWave( currentTick, waveHeightAve2):
       peak = findWave2.wavePeakToPeak
       period = findWave2.wavePeriod
       power = findWave2.wavePower
+      '''
+      #if wave is also coherent  ... or is the coherent test only for clusters
+      if dominantPeriod.firstPeriod == dominantPeriod.secondPeriod ==
+          dominantPeriod.thirdPeriod:
+        save power as part of the cluster
+      else:
+        save power as part of the background waves
+      '''
       influx.sendMeasurementLevel( currentTick, "wave", "peak", peak)
       influx.sendMeasurementLevel( currentTick, "wave", "period", period)
       influx.sendMeasurementLevel( currentTick, "wave", "power", power)
+      dominantPeriod.reset()
 
       waveHeightHourlyHighLow.append( peak)
       waveHeightDailyHighLow.append( peak)

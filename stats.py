@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8
 # coding=utf8
 """
-rawwaves - module for holding and analyzing the raw wave data
+stats - module for holding and analyzing statistical data
 
 Copyright (c) 2016-2018 Kirk Carlson, All Rights Reserved
 
