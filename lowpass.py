@@ -54,8 +54,8 @@ class LowPass ( object):
     self.positive = True
 
 
-  def append( self, value):
-    """Check a value against the low pass filter
+  def update( self, value):
+    """Update a low pass filter with a new vlaue
   
     Args:
       value: (float) the value to update the filter
@@ -76,21 +76,21 @@ class LowPass ( object):
       value = max(self.members)
       if value >= 0:
         return value
-      else:
-        value = min(self.members)
-        self.positive = False
-        return value
-    else:
+      #value is negative
       value = min(self.members)
-      if value < 0:
-        return value
-      else:
-        value = max(self.members)
-        self.positive = True
-        return value
+      self.positive = False
+      return value
+    #value is negative
+    value = min(self.members)
+    if value < 0:
+      return value
+    #value is positive 
+    value = max(self.members)
+    self.positive = True
+    return value
 
 
-  def _test_(self):
+  def test(self):
     """Test the functions and methods in this module.
   
     Args:
@@ -105,7 +105,7 @@ class LowPass ( object):
     tests = [ 1,2,3,4,3,2,1,2,3,4,5,6,5,4,3,2,1,0,-1,-2,-1,0,1,0,-1,-1,-2,-3,-2,1, 2, 3, 4]
     result =[ 1,2,3,4,4,4,4,3,3,4,5,6,6,6,6,5,4,3, 2, 1, 0,0,1,1, 1, 1, 0,-3,-3,-3,-3,-2,4]
     for i, test in enumerate( tests):
-      lp = self.append( test)
+      lp = self.update( test)
       if lp is not result[i]:
         print "got:", lp, " expected", result[i]
         exit(1)
@@ -115,4 +115,4 @@ class LowPass ( object):
 
 if __name__ == "__main__":
   testLP = LowPass( 4)
-  testLP._test_()
+  testLP.test()

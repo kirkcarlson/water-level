@@ -38,6 +38,12 @@ LIVE_GENERATION = 1 # measurements are from real sensors
 RANDOM_GENERATION = 2 # measurements are randomly generated
 GENERATION = RANDOM_GENERATION # type of generation: file, random, real
 
+INFLUXDB_DATABASE = "waterlevel"
+INFLUXDB_HOST = "localhost"
+INFLUXDB_PORT = 8086
+INFLUXDB_POLICY_NAME = "keep forever"
+INFLUXDB_POLICY = "INF"
+
 MAX_LIST = 10 # maximum number of list items for pretty printing
 
 # constants for random data generation
@@ -118,6 +124,14 @@ selectedVerbosity = VERB_DEBUG
 
 PLOT_SUMMARY = 1
 PLOT_MODE = PLOT_SUMMARY
+SEND_RAW_MEASUREMENTS = False # send raw measurement and associated statistics
+SEND_RAW_WAVES = True # send raw waves
+SEND_START_RESPONSES = False # include the spectrum where responses are timed
+                             # to the start of the sample with the frequency
+                             # response.
+                             # The current normal is the time is at the end of
+                             # the sample.
+
 
 PEAK_THRESHOLD = .25 # inches
 WAVE_PERIOD_THRESHOLD = .3 # seconds
@@ -126,13 +140,6 @@ WAVE_PERIOD_CUTOFF = 3 # seconds
 PEAK_THRESHOLD = 0. # inches
 WAVE_PERIOD_THRESHOLD = 0 # seconds
 WAVE_PERIOD_CUTOFF = 100 # seconds
-
-#spectrum graphing configuration
-SEND_START_RESPONSES = False # include the spectrum where responses are timed
-                             # to the start of the sample with the frequency
-                             # response.
-                             # The current normal is the time is at the end of
-                             # the sample.
 
 
 #cluster configuration

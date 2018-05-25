@@ -1,17 +1,19 @@
 all: main # set up the default
 
-SRC = config.py \
+SRC = average.py \
+      cluster.py \
+      config.py \
+      dominant.py \
       findwave.py \
+      highlow.py \
+      influx.py \
       inputchan.py \
-      level.py \
-      plot.py \
-      rawwaves.py \
+      lowpass.py \
+      mysched.py \
       report.py \
       resamples.py \
-      sched.py \
-      spectra.py \
       stats.py \
-      util.py \
+      trap.py \
       watch.py \
       main.py
 

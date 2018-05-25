@@ -35,15 +35,14 @@ import math
 
 #### CLASSES ####
 
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
 class FindWave (object):
   """Find a wave by doing zero crossing analysis. """ 
-  # pylint: disable=too-few-public-methods
 
-  # pylint: disable=too-many-instance-attributes
   def __init__ (self):
     self.levelTrend = 0
 
-    self.waveHeight = 0 # instantaneous height
     self._firstTime = True
     self._lastPositiveTrend = True
     self._positivePeak = 0
@@ -54,10 +53,7 @@ class FindWave (object):
     self.waveTick = 0
     self.wavePeakToPeak = 0
     self.wavePeriod = 0
-    self.waveBalance = 0
     self.wavePower = 0
-
-  #pylint: enable=too-many-instance-attributes
 
 
   def findWave (self, tick, currentWaveHeight):
@@ -124,12 +120,6 @@ class FindWave (object):
   
           #end ALT wave power calculation
   
-          if self._negativePeriod > 0 and self._negativePeak < 0: # no div by 0
-            self.waveBalance = (self._positivePeriod * self._positivePeak) / \
-                (self._negativePeriod * -self._negativePeak) -0.5 # 0 balanced,
-                                                                # +/- imbalance
-          else:
-            self.waveBalance = 0
           if self.wavePeriod < 90: # s, reasonableness check
             waveFound = True
     
@@ -151,6 +141,7 @@ class FindWave (object):
     return waveFound
 
 
+#pylint: enable=too-many-instance-attributes
 #pylint: enable=too-few-public-methods
   
   

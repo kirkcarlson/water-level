@@ -54,7 +54,8 @@ class HighLow ( object):
     self.first = True
     self.low = None
     self.high = None
-
+    self.open = None
+    self.close = None
 
   def reset (self):
     """reset a highlow object
@@ -75,8 +76,8 @@ class HighLow ( object):
     self.close = None
 
 
-  def append( self, value):
-    """Append a value to an average
+  def update( self, value):
+    """Update a high-low with a new value
   
     Args:
       value
@@ -116,9 +117,9 @@ class HighLow ( object):
       None
     """
 
-    # just a dummy for now
-    print "{0} low:{1:.2f} open:{2:.2f} close:{3:.2f} high:{4:.2f}".format(
-        self.name, self.low, self.open, self.close, self.high)
+    hiloReport = "{0} low:{1:.2f} open:{2:.2f} close:{3:.2f} high:{4:.2f}".format(
+      self.name, self.low, self.open, self.close, self.high)
+    reportChan.prEvent( reportTick, "hilo", hiloReport) 
 
 
   def getString ( self):
@@ -135,10 +136,10 @@ class HighLow ( object):
     """
 
     return "{0}..{1:.2f} {2:.2f} {3:.2f} {4:.2f}".format(
-        self.name, self.open, self.low, self.high, self.close)
+      self.name, self.open, self.low, self.high, self.close)
 
 
-  def _test_(self):
+  def test(self):
     """Test the functions and methods in this module.
   
     Args:
@@ -153,17 +154,17 @@ class HighLow ( object):
     tests = [ 25., 26., 27., 28., 29., 28., 27., 26., 25., 26., 27.]
     for test in tests:
       # this needs to be updated to use self.analyze(tick,level, reportChan)
-      self.append( test)
+      self.update( test)
     print self.getString()
     #self.report()
     self.reset()
     for test in tests[-4:]:
       # this needs to be updated to use self.analyze(tick,level, reportChan)
-      self.append( test)
+      self.update( test)
     print self.getString()
     #self.report()
 
 
 if __name__ == "__main__":
   testAve = HighLow( "test level", "in")
-  testAve._test_()
+  testAve.test()

@@ -28,6 +28,7 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
+#import report
 
 
 #### CLASSES ####
@@ -109,8 +110,8 @@ class Average( object):
       None
     """
 
-    # just a dummy for now
-    print "{0} average is {1}{2}".format( self.name, self.average, self.units)
+    aveReport = "{0} average is {1}{2}".format( self.name, self.average, self.units)
+    reportChan.prEvent( reportTick, "Ave", aveReport)
 
 
   def getString ( self):
@@ -129,7 +130,7 @@ class Average( object):
     return "{0} {1}".format( self.average, self.units)
 
 
-  def _test_(self):
+  def test( self):
     """Test the functions and methods in this module.
   
     Args:
@@ -144,7 +145,7 @@ class Average( object):
     tests = [ 25., 26., 27., 28., 29., 28., 27., 26., 25., 26., 27.]
     for test in tests:
       # this needs to be updated to use self.analyze(tick,level, reportChan)
-      self.append( test)
+      self.update( test)
     print "{0}: {1}".format( self.name,  self.getString())
 
 
@@ -154,5 +155,5 @@ if __name__ == "__main__":
   #               25., #seed
   #               4 #span
   #               )
-  testAve = Average( "test level", "in", .25, 4)
-  testAve._test_()
+  testAve = Average( "test level", "in", 4)
+  testAve.test()

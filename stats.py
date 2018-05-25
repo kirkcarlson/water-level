@@ -30,11 +30,13 @@ THE SOFTWARE.
 
 import math
 
+from config import VERB_COMMON
 
 
 #### CLASSES ####
+# pylint: disable=too-many-instance-attributes
 
-class Stats2 ( object):
+class Stats ( object):
   """Keep running average, standard deviation and coefficient of variation."""
 
   def __init__ (self, name, units, span):
@@ -56,6 +58,7 @@ class Stats2 ( object):
     self.span = span
 
     self.first = True
+    self.average = 0
     self.powerSumAverage = 0
     self.standardDeviation = 0
     self.coefficientOfVariation = 1
@@ -79,8 +82,8 @@ class Stats2 ( object):
     self.coefficientOfVariation = 1
 
 
-  def append( self, value):
-    """Add a value to the running statistics for the variable.
+  def update( self, value):
+    """Update the running statistics with a new value
   
     Args:
       value: (float) the value to update the running statistics
@@ -107,7 +110,7 @@ class Stats2 ( object):
           (value * value - powerSumAve) / self.span
       try:
         stdDeviation = math.sqrt(
-            abs(powerSumAve * value - value * mean * mean / (self.span - 1) ) )
+          abs(powerSumAve * value - value * mean * mean / (self.span - 1) ) )
       except ValueError:
         print "Standard deviation squared is negative. span:{0:.2f} pSA:{1:.2f} value:{2:.2f} mean:{3:.2f}".format( self.span, powerSumAve, value, mean)
         stdDeviation = 0
@@ -137,10 +140,21 @@ class Stats2 ( object):
       None
     """
 
-    # just a dummy for now
-    print "{0} average is {1}".format( self.name, self.average)
-    print "{0} standard deviation is {1}".format( self.name, self.standardDeviatoin)
-    print "{0} coefficient of variation is {1}".format( self.name, self.coefficientOfVariation)
+    reportChan.prEvent (reportTick,
+                        "Stat",
+                        "{0} average is {1}".format(
+                          self.name, self.average),
+                        VERB_COMMON)
+    reportChan.prEvent (reportTick,
+                        "Stat",
+                        "{0} standard deviation is {1}".format(
+                          self.name, self.standardDeviation),
+                        VERB_COMMON)
+    reportChan.prEvent (reportTick,
+                        "Stat",
+                        "{0} coefficient of variation is {1}".format(
+                          self.name, self.coefficientOfVariation),
+                        VERB_COMMON)
 
 
   def getString ( self):
@@ -151,15 +165,7 @@ class Stats2 ( object):
     
     Returns:
       None
-CoV: -135670.792792 stdD: 0.0132999354559 mean: -9.80309407959e-06
 
-CoV: 102842.021633 stdD: 0.0202727786057 mean: 1.97125438451e-05
-
-Water Level High ##NEW## 32.9606172641  Low 32.4783796817
-Wave Heights High ##NEW## 0.204392891219  Low -0.25264025676
-pFR 0 17 60 Wake Response Details 0 4
-/home/kirk/.local/lib/python2.7/site-packages/matplotlib/cbook/deprecation.py
-    
     Raises:
       None
     """
@@ -170,7 +176,7 @@ pFR 0 17 60 Wake Response Details 0 4
 
 
 
-  def _test_(self):
+  def test(self):
     """Test the functions and methods in this module.
   
     Args:
@@ -185,18 +191,19 @@ pFR 0 17 60 Wake Response Details 0 4
     tests = [ 25., 26., 27., 28., 29., 28., 27., 26., 25., 26., 27.]
     for test in tests:
       # this needs to be updated to use self.analyze(tick,level, reportChan)
-      self.append( test)
+      self.update( test)
     ave, sd, cv = self.getString()
     print "{0}: ave {1} SD {2} CV {3}".format( self.name,  ave, sd, cv)
     for test in tests[-4:]:
-      # this needs to be updated to use self.analyze(tick,level, reportChan)
       self.reset()
-      self.append( test)
+      self.update( test)
     ave, sd, cv = self.getString()
     print "{0}: ave {1} SD {2} CV {3}".format( self.name,  ave, sd, cv)
+
+# pylint: enable=too-many-instance-attributes
 
 
 
 if __name__ == "__main__":
-  testStats = Stats2( "test level", "in", 25)
-  testStats._test_()
+  testStats = Stats( "test level", "in", 25)
+  testStats.test()

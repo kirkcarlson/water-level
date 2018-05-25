@@ -2,7 +2,7 @@
 # vim: set fileencoding=utf-8
 # coding=utf8
 """
-sched -- module for scheduling tasks
+mysched -- module for scheduling tasks
 
 Copyright (c) 2016-2018 Kirk Carlson, All Rights Reserved
 
@@ -74,11 +74,11 @@ class Schedule (object):
       due = nextDue ( tick, period, offset)
 
     self.tasks.append ( {
-        'processID': self.processID,
-        'function':  function,
-        'period':    period,
-        'offset':    offset,
-        'due':       due
+      'processID': self.processID,
+      'function':  function,
+      'period':    period,
+      'offset':    offset,
+      'due':       due
     })
     return self.processID
 
@@ -128,11 +128,11 @@ class Schedule (object):
           if dueTask['period'] > 0: # recurring task
             due = nextDue (tick, dueTask['period'], dueTask['offset'])
             self.tasks.append ( {
-                'processID': dueTask['processID'],
-                'function':  dueTask['function'],
-                'period':    dueTask['period'],
-                'offset':    dueTask['offset'],
-                'due':       due
+              'processID': dueTask['processID'],
+              'function':  dueTask['function'],
+              'period':    dueTask['period'],
+              'offset':    dueTask['offset'],
+              'due':       due
             })
  
 

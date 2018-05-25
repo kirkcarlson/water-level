@@ -27,13 +27,13 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
-import datetime
 
 import report
 from config import NEUTRAL
 from config import RISING
 from config import FALLING
 from config import TREND
+from config import VERB_DEBUG
 
 
 
@@ -133,11 +133,11 @@ class Watch( object):
       outChan.prEvent(tick, # this marks time of the sample
                       self.name,
                       "Anomalous {} this: {:.2f} ave {:.2f}".format(
-                          self.name,
-                          value,
-                          self.ave
+                        self.name,
+                        value,
+                        self.ave
                       ),
-                      report.VERB_DEBUG  )
+                      VERB_DEBUG  )
 
 
   def findTrend(self, tick, value, outChan) :
@@ -185,26 +185,26 @@ class Watch( object):
       else:
         rate = 0
       outChan.prEvent(
-          tick, # this marks the end of run
-          self.name,
-          "{} run: {:.2f}-{:.2f} = {:.2f}, rate {:.2f} in/min".format(
-              TREND[self.trend],
-              self.pastValue, # i.e., latest peak
-              self.reversalValue, # earliest peak
-              self.pastValue-self.reversalValue, # run
-              rate #rate/min
-          ),
-          report.VERB_DEBUG  )
+        tick, # this marks the end of run
+        self.name,
+        "{} run: {:.2f}-{:.2f} = {:.2f}, rate {:.2f} in/min".format(
+          TREND[self.trend],
+          self.pastValue, # i.e., latest peak
+          self.reversalValue, # earliest peak
+          self.pastValue-self.reversalValue, # run
+          rate #rate/min
+        ),
+        VERB_DEBUG  )
   
         # report the reversal
       outChan.prEvent(
-          tick, # this marks begin of event
-          self.name,
-          "Reversal {}: {:.2f}".format(
-              TREND[testTrend],
-              self.pastValue, # i.e., latest peak
-          ),
-          report.VERB_DEBUG  )
+        tick, # this marks begin of event
+        self.name,
+        "Reversal {}: {:.2f}".format(
+          TREND[testTrend],
+          self.pastValue, # i.e., latest peak
+        ),
+        VERB_DEBUG  )
   
       self.reversalValue = self.pastValue
       self.reversalTime = self.pastTime
@@ -237,17 +237,15 @@ class Watch( object):
       periodStr = "{:.1f} hr".format(period/60./60)
 
     outChan.prReport( "---")
-    outChan.prReport( FORM.format("Report for", self.name) )
-    outChan.prReport( FORM.format("Report time", "{:%b %d %H:%M:%S}".format(
-        datetime.datetime.fromtimestamp (float(tick))) ) )
-    outChan.prReport( FORM.format("Report period", periodStr) )
-    outChan.prReport( FORM.format("Report samples", self.elements) )
-    outChan.prReport( FORM.format("Value", "{:.2f}".format(self.value)) )
-    outChan.prReport( FORM.format("Trend", "{}".format(TREND[self.trend])) )
-    outChan.prReport( FORM.format("Reversals", "{:d}".format(self.reversals)) )
-    outChan.prReport( FORM.format("Minimum", "{:.2f}".format(self.min)) )
-    outChan.prReport( FORM.format("Maximum", "{:.2f}".format(self.max)) )
-    outChan.prReport( FORM.format("Average", "{:.2f}".format(self.ave)) )
+    outChan.prReport( tick, FORM.format("Report for", self.name) )
+    outChan.prReport( tick, FORM.format("Report period", periodStr) )
+    outChan.prReport( tick, FORM.format("Report samples", self.elements) )
+    outChan.prReport( tick, FORM.format("Value", "{:.2f}".format(self.value)) )
+    outChan.prReport( tick, FORM.format("Trend", "{}".format(TREND[self.trend])) )
+    outChan.prReport( tick, FORM.format("Reversals", "{:d}".format(self.reversals)) )
+    outChan.prReport( tick, FORM.format("Minimum", "{:.2f}".format(self.min)) )
+    outChan.prReport( tick, FORM.format("Maximum", "{:.2f}".format(self.max)) )
+    outChan.prReport( tick, FORM.format("Average", "{:.2f}".format(self.ave)) )
 
   def cmp(self, other):
     """Compare the current LevelRegister with anohter, for testing purposes."""
@@ -285,7 +283,7 @@ class Watch( object):
       print "Registers match"
     else:
       print "Bad match for key {}: values: {} and {}".format(
-          error, selfValue, otherValue)
+        error, selfValue, otherValue)
   # pylint: enable=too-many-instance-attributes
 
 
@@ -396,11 +394,11 @@ class RateTrigger(object):
           deltaTime = (tick - self.savedTime) / 60. #minutes
           deltaValue = value - self.savedValue
           self.outChan.prEvent(
-              tick , # this marks begin of event
-              self.name,
-              "rapid {}: {:.2f} {} {:.2f} min".format(
-                  TREND[trend], deltaValue, self.units, deltaTime),
-              report.VERB_DEBUG)
+            tick , # this marks begin of event
+            self.name,
+            "rapid {}: {:.2f} {} {:.2f} min".format(
+              TREND[trend], deltaValue, self.units, deltaTime),
+            VERB_DEBUG)
           triggered = True
         self.savedTime = tick
         self.savedValue = value
@@ -479,21 +477,21 @@ def _test():
 
 
   ### VARIABLES AND TEST DATA ###
-  outChan = report.ReportChannel("", report.VERB_DEBUG)
+  outChan = report.ReportChannel("", VERB_DEBUG)
   HYSTERESIS = .25 # amount water level has to change before calling it a trend
   levelWatch = Watch("Water Level", 24.000, 0, HYSTERESIS)
   rates = []
 
   CHANGE_TUPLES = [
-      # this list of tuples set the time and level thresholds for alarms
-      # these must be from long periods to short for prioritization
-      # this express a rate in samples, value or value:samples or value/samples
-      # (if the samples are once a minute, the rate is value per samples
-      # minute, if the samples are 30 per second, the rate is value per samples
-      # 1/30 second the sampling rate is set outside of this object
-      (50, .60/50), #samples=seconds, inches
-      (30, .60/30), #samples=seconds, inches
-      (10, .60/10), #samples=seconds, inches
+    # this list of tuples set the time and level thresholds for alarms
+    # these must be from long periods to short for prioritization
+    # this express a rate in samples, value or value:samples or value/samples
+    # (if the samples are once a minute, the rate is value per samples
+    # minute, if the samples are 30 per second, the rate is value per samples
+    # 1/30 second the sampling rate is set outside of this object
+    (50, .60/50), #samples=seconds, inches
+    (30, .60/30), #samples=seconds, inches
+    (10, .60/10), #samples=seconds, inches
   ]
   for i, tup in enumerate(CHANGE_TUPLES):
     rates.append( RateTrigger ( "level rate " + str(i),
@@ -502,42 +500,42 @@ def _test():
                                 outChan)) # trigger, count, outChan
 
   levels = [
-      24.123, 24.133, 24.143, 24.153, 24.163,
-      24.173, 24.183, 24.193, 24.203, 24.213, #10
-      24.223, 24.233, 24.243, 24.253, 24.263,
-      24.273, 24.283, 24.293, 24.303, 24.313, #20
-      24.323, 24.333, 24.343, 24.353, 24.363,
-      24.373, 24.383, 24.393, 24.403, 24.413, #30
-      24.423, 24.433, 24.443, 24.453, 24.463,
-      24.473, 24.483, 24.493, 24.503, 24.513, #40
-      24.523, 24.533, 24.543, 24.553, 24.563,
-      24.573, 24.583, 24.593, 24.603, 24.613, #50
-      24.623, 24.633, 24.643, 24.653, 24.663,
-      24.673, 24.683, 24.693, 24.703, 24.713, #60
-      24.703, 24.693, 24.683, 24.643, 24.663,
-      24.653, 24.643, 24.633, 24.623, 24.613, #70
-      24.603, 24.593, 24.583, 24.543, 24.563,
-      24.553, 24.543, 24.533, 24.523, 24.513, #80
-      24.503, 24.493, 24.483, 24.443, 24.463,
-      24.453, 24.443, 24.433, 24.423, 24.413, #90
-      24.403, 24.393, 24.383, 24.343, 24.363,
-      24.353, 24.343, 24.333, 24.323, 24.313, #100
-      24.303, 24.293, 24.283, 24.273, 24.263,
-      24.253, 24.243, 24.233, 24.223, 24.213, #110
-      24.203, 24.193, 24.183, 24.173, 24.163,
-      24.153, 24.143, 24.133, 24.123, 24.113, #120
-      24.123, 24.133, 24.143, 24.153, 24.163,
-      24.173, 24.183, 24.193, 24.203, 24.213, #130
-      24.223, 24.233, 24.243, 24.253, 24.263,
-      24.273, 24.283, 24.293, 24.303, 24.313, #140
-      24.323, 24.333, 24.343, 24.353, 24.363,
-      24.373, 24.383, 24.393, 24.403, 24.413, #150
-      24.403, 24.393, 24.383, 24.343, 24.363,
-      24.353, 24.343, 24.333, 24.323, 24.313, #160
-      24.303, 24.293, 24.283, 24.273, 24.263,
-      24.253, 24.243, 24.233, 24.223, 24.213, #170
-      24.203, 24.193, 24.183, 24.173, 24.163,
-      24.153, 24.143, 24.133, 24.123, 24.113, #180
+    24.123, 24.133, 24.143, 24.153, 24.163,
+    24.173, 24.183, 24.193, 24.203, 24.213, #10
+    24.223, 24.233, 24.243, 24.253, 24.263,
+    24.273, 24.283, 24.293, 24.303, 24.313, #20
+    24.323, 24.333, 24.343, 24.353, 24.363,
+    24.373, 24.383, 24.393, 24.403, 24.413, #30
+    24.423, 24.433, 24.443, 24.453, 24.463,
+    24.473, 24.483, 24.493, 24.503, 24.513, #40
+    24.523, 24.533, 24.543, 24.553, 24.563,
+    24.573, 24.583, 24.593, 24.603, 24.613, #50
+    24.623, 24.633, 24.643, 24.653, 24.663,
+    24.673, 24.683, 24.693, 24.703, 24.713, #60
+    24.703, 24.693, 24.683, 24.643, 24.663,
+    24.653, 24.643, 24.633, 24.623, 24.613, #70
+    24.603, 24.593, 24.583, 24.543, 24.563,
+    24.553, 24.543, 24.533, 24.523, 24.513, #80
+    24.503, 24.493, 24.483, 24.443, 24.463,
+    24.453, 24.443, 24.433, 24.423, 24.413, #90
+    24.403, 24.393, 24.383, 24.343, 24.363,
+    24.353, 24.343, 24.333, 24.323, 24.313, #100
+    24.303, 24.293, 24.283, 24.273, 24.263,
+    24.253, 24.243, 24.233, 24.223, 24.213, #110
+    24.203, 24.193, 24.183, 24.173, 24.163,
+    24.153, 24.143, 24.133, 24.123, 24.113, #120
+    24.123, 24.133, 24.143, 24.153, 24.163,
+    24.173, 24.183, 24.193, 24.203, 24.213, #130
+    24.223, 24.233, 24.243, 24.253, 24.263,
+    24.273, 24.283, 24.293, 24.303, 24.313, #140
+    24.323, 24.333, 24.343, 24.353, 24.363,
+    24.373, 24.383, 24.393, 24.403, 24.413, #150
+    24.403, 24.393, 24.383, 24.343, 24.363,
+    24.353, 24.343, 24.333, 24.323, 24.313, #160
+    24.303, 24.293, 24.283, 24.273, 24.263,
+    24.253, 24.243, 24.233, 24.223, 24.213, #170
+    24.203, 24.193, 24.183, 24.173, 24.163,
+    24.153, 24.143, 24.133, 24.123, 24.113, #180
   ]
 
   duration = len(levels)

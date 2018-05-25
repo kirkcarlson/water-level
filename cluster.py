@@ -27,22 +27,15 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
-import datetime
-
 import average
 import report
-import influx
-from config import CLUSTER_WINDOW
 from config import CLUSTER_MULTIPLIER
 from config import MAX_DISTANCE_LIMIT
-
+from config import VERB_DEBUG
 
 
 
 #### CONSTANTS ####
-
-#### globals ####
-client = None
 
 
 #### CLASSES ####
@@ -76,7 +69,6 @@ class Cluster( object):
   # Eight is reasonable in this case.
 
   def __init__(self, name, outChan, multiplier):
-    global client
     """Return a LevelRegister object whose name is *name*."""
     self.name = name
     self.outChan = outChan
@@ -90,10 +82,13 @@ class Cluster( object):
     self.maxPowerTick = 0
     self.maxPeriod = 0.
     self.maxPeriodTick = 0
+    self.maxPeak = 0.
+    self.maxPeakTick = 0
     self.processID = None
     self.distance = 0
     self.energy = 0
     self.waveLength = 0 # also maximum wave length
+    self.threshold = 1
 
     #self.events = []
     #this is an array of:
@@ -109,82 +104,22 @@ class Cluster( object):
 
 
 
-  def report( self, tick):
+  def prReport( self, tick, ):
     """Print a report summarizing the power spike cluster
     """
 
+    ev = "Cluster en: "+\
+      "{:.1f} dur: {:.1f} pow: {:4.1f} peak: {:.1f} per: {:.1f}".format(
+        self.energy,
+        tick - self.clusterTick,
+        self.maxPower,
+        self.maxPeak,
+        self.maxPeriod),
     self.outChan.prEvent( tick , # this marks end of cluster
                           self.name,
-                          "Cluster energy: {:.1f} "+\
-                              "duration: {:.1f} "+\
-                              "max power: {:4.1f} "+\
-                              "max period: {:.1f}".format(
-                                  self.energy,
-                                  tick - self.clusterTick,
-                                  self.maxPower,
-                                  self.maxPeriod),
-                           report.VERB_DEBUG)
+                          ev,
+                          VERB_DEBUG)
 
-    # add the cluster to the log of events
-    #self.events.append ( { 'time': self.clusterTick,
-    #                       'distance': self.distance,
-    #                       #'boatLength': self.boatLength,
-    #                       'period': self.maxPeriod,
-    #                       'energy': self.energy,
-    #                     } )
-    influx.sendMeasurementLevel( tick, "cluster", "distance", self.distance+0)
-    influx.sendMeasurementLevel( tick, "cluster", "period", self.maxPeriod+0)
-    influx.sendMeasurementLevel( tick, "cluster", "energy", self.energy+0)
-
-    #NOW OBSOLETE
-    # reset accumulators for the cluster
-    #self.energy = 0.
-    #self.maxPower = 0.
-    #self.maxPowerTick = 0
-    #self.maxPeriod = 0.
-    #self.maxPeriodTick = 0
-    #self.processID = None # assume that this was called by the scheduler
-
-  ''' OBSOLETE
-  def analyzePower( self, tick, power, period, powerAverage):
-    """Analyze the power spike for inclusion in cluster
-  
-    Args:
-      tick: (float) epoch associated with the level
-      power: (float) amount of power for the current wave
-      period: length (s) of the current wave
-      powerAverage: (float) average power over the long term
-    
-    Returns:
-      True if wave qualifies as a cluster
-      False if wave does not qualify as a cluster
-    
-    Raises:
-      None
-    """
-    from main import schedClusterEnd, unschedClusterEnd
-
-    if power > self.powerMultiplier * powerAverage:
-      if self.processID:
-        unschedClusterEnd ( self.processID)
-      else: # start of a new cluster
-        #report start of new cluster
-        self.outChan.prEvent( tick , # this marks begin of event
-                              self.name,
-                                "cluster start".format(
-                                  ),
-                              report.VERB_DEBUG)
-        self.clusterTick = tick
-        self.maxPower = power
-        self.maxPowerTick = tick
-        self.energy = 0
-      self.energy = self.energy + (power * period)
-      if power >= self.maxPower:
-        self.maxPowerTick = tick
-        self.maxPower = power
-      self.processID = schedClusterEnd (self.reportDummy, tick,
-                                        CLUSTER_WINDOW)
-'''
 
   def isACluster( self, tick, peak, period, power):
     """should the current wave be part of a cluster
@@ -208,18 +143,20 @@ class Cluster( object):
       return False
     else:
       self.powerAverage.update(power) 
-      threshold = self.powerMultiplier * self.powerAverage.average
-      influx.sendMeasurementLevel( tick, "cluster", "threshold", threshold)
+      self.threshold = self.powerMultiplier * self.powerAverage.average
 
-      if power < threshold: # it is not a cluster
+      if power < self.threshold: # it is not a cluster
         #self.powerAverage.update(power) 
-        #sendPowerThreshold( tick, threshold)
+        #sendPowerThreshold( tick, self.threshold)
         return False
       else: # it is a cluster...
         self.energy = self.energy + (power * period)
         if power >= self.maxPower:
           self.maxPowerTick = tick
           self.maxPower = power
+        if peak > self.maxPeak:
+          self.maxPeak = peak
+          self.maxPeakTick = tick
         return True
 
 
@@ -240,6 +177,8 @@ class Cluster( object):
     self.maxPowerTick = tick
     self.maxPeriod = 0
     self.maxPeriodTick = tick
+    self.maxPeak = 0
+    self.maxPeakTick = tick
     self.energy = 0
 
 
@@ -280,14 +219,17 @@ class Cluster( object):
                             self.name,
                             "Period {:.1f}s wavespeed: {:.1f} ft/s wavelength "\
                                 "{:.1f} distance {:.0f}".format(
-                                    period, waveSpeed, self.waveLength, distance),
-                            report.VERB_DEBUG)
+                                  period, waveSpeed, self.waveLength, distance),
+                            VERB_DEBUG)
     if period > self.maxPeriod:
       self.maxPeriod = period
       self.maxPeriodTick = tick
+    if peak > self.maxPeak:
+      self.maxPeak = period
+      self.maxPeakTick = tick
 
 
-  def analyzePeriod( self, tick, period):
+  def analyzePeriod( self, tick, period): # NOT CALLED, OBSOLETE?
     """Analyze the value for real-time limits.
   
     Args:
@@ -319,12 +261,13 @@ class Cluster( object):
           else:
             self.distance = MAX_DISTANCE_LIMIT
       
-      self.outChan.prEvent( tick , # this marks begin of event
-                            self.name,
-                            "Period {:.1f}s wavespeed: {:.1f} ft/s wavelength "\
-                                "{:.1f} distance {:.0f}".format(
-                                    period, waveSpeed, self.waveLength, distance),
-                            report.VERB_DEBUG)
+      self.outChan.prEvent(
+        tick , # this marks begin of event
+        self.name,
+        "Period {:.1f}s wavespeed: {:.1f} ft/s wavelength "\
+               "{:.1f} distance {:.0f}".format(
+                 period, waveSpeed, self.waveLength, distance),
+        VERB_DEBUG)
       if period > self.maxPeriod:
         self.maxPeriod = period
         self.maxPeriodTick = tick
@@ -342,27 +285,13 @@ class Cluster( object):
     Raises:
       None
     """
-    self.events = self.events [-period:]
+    pass
+    #self.events = self.events [-period:]
 
 
-  '''
-  def reportDummy ( self, currentTime):
-    """Dummy scheduling function for reporting a cluster end event"""
-    from main import currentTick, getCurrentTick
-    #from main import currentTick
-    #import main
-
-    getIt = getCurrentTick
-    #print "reportDummy"
-    #print "currentTick", currentTick
-    print "report Dummy getCurrentTick()", getCurrentTick(1), getIt(1), currentTime
-    self.report( currentTime)
-
-  # would like a timed event for the end of the cluster to make the report more timely
-  # would have to modify the event due time with each new qualifying spike
-  '''
 #### FUNCTIONS ####
 
+# pylint: disable=pointless-string-statement
 '''
 now want something a bit different
 outline:
@@ -374,25 +303,7 @@ outline:
     started with same sort of event -- power
     for high traffic times may need to track multiple highPeriods within a cluster at a time
 '''
-
-
-'''
-def dummy():
-  """tests whether callback routines will work with scheduler
-
-  Args:
-    None
-  
-  Returns:
-    None
-  
-  Raises:
-    None
-  """
-  print "Dummy got called"
-'''
-
-  
+# pylint: enable=pointless-string-statement
 
 
 def _test():
@@ -425,7 +336,7 @@ def _test():
   ### CODE ###
 
   for cluster in data:
-    test.analyzePower( cluster[0], cluster[2], cluster[1], cluster[3])
+    #test.analyzePower( cluster[0], cluster[2], cluster[1], cluster[3])
     test.analyzePeriod( cluster[0], cluster[1])
 
 

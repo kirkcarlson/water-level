@@ -28,13 +28,16 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
+from config import VERB_COMMON
 
 
 #### CLASSES ####
 
+# pylint: disable=too-many-instance-attributes
 class Trap ( object):
   """Trap values that are either too high or too low."""
 
+  # pylint: disable=too-many-arguments
   def __init__ (self, high, low, units, span, name="", port=None):
     """Initialze a trap object
   
@@ -43,8 +46,8 @@ class Trap ( object):
       low: (float) low of good values
       units: (string) units used in reports
       span: (int) number of samples in hysteresis
-      port: (obj) optional output port for report
       name: (string) optional name of the trap for reports
+      port: (obj) optional output port for report
       
     Returns:
       False: value is in range or no change from previous report
@@ -60,10 +63,11 @@ class Trap ( object):
     self.inRangeCount = 0
     self.name = name
     self.port = port
+  # pylint: enable=too-many-arguments
     
 
 
-  def reset (self, seed):
+  def reset (self):
     """reset a trap object
   
     Args:
@@ -78,8 +82,8 @@ class Trap ( object):
     self.inRangeCount = 0
 
 
-  def append( self, value):
-    """Append a value to a trap
+  def update( self, tick, value):
+    """Update the trap with a new value
 
     Returns False unless an out of range value is found. Only one True
     is sent for a series of out of range values until the value returns
@@ -88,7 +92,8 @@ class Trap ( object):
     May trigger a report.
 
     Args:
-      value
+      tick: (float)(s) Epoch of value
+      value: (float) value to be checked
     
     Returns:
       boolean indicated whether trap was tripped
@@ -99,18 +104,16 @@ class Trap ( object):
 
     if value > self.high: # out of range
       if self.inRangeCount is 0: # first time
-        self.inRange = self.span # start count down
-        if self.port is not None:
-          self.report(self, value, self.port)
+        self.inRangeCount = self.span # start count down
+        self.report(tick, value)
         return True
       else:
         self.inRangeCount = self.inRangeCount - 1
 
     elif value < self.low: # out of range
       if self.inRangeCount is 0: # first time
-        self.inRange = self.span # start count down
-        if port is not None:
-          self.report(self, value, port)
+        self.inRangeCount = self.span # start count down
+        self.report(tick, value)
         return True
       else:
         self.inRangeCount = self.inRangeCount - 1
@@ -121,10 +124,11 @@ class Trap ( object):
     return False
     
     
-  def report( self, value, reportChan):
+  def report( self, tick, value):
     """Report the exceding of a trap
   
     Args:
+      tick: (float)(s) epoch of the event
       value: (float) value to be reported
       reportChan: destination for the report
     
@@ -135,11 +139,25 @@ class Trap ( object):
       None
     """
 
-    # just a dummy for now
-    if value > self.high:
-      print "{0} too high is {1}".format( self.name, value)
-    elif value < self.low:
-      print "{0} too low is {1}".format( self.name, value)
+    if self.port is None:
+      if value > self.high:
+        print "{0} too high is {1}".format( self.name, value)
+      elif value < self.low:
+        print "{0} too low is {1}".format( self.name, value)
+    else:
+      if value > self.high:
+        self.port.prEvent(
+          tick,
+          "Trap",
+          "{0} too high is {1}".format( self.name, value),
+          VERB_COMMON)
+      elif value < self.low:
+        self.port.prEvent(
+          tick,
+          "Trap",
+          "{0} too low is {1}".format( self.name, value),
+          VERB_COMMON)
+
 
 
   def getString ( self):
@@ -158,7 +176,7 @@ class Trap ( object):
     return "{0}..{1} {2}".format( self.low, self.high, self.units)
 
 
-  def _test_(self):
+  def test(self):
     """Test the functions and methods in this module.
   
     Args:
@@ -173,15 +191,17 @@ class Trap ( object):
     tests = [ 25., 26., 27., 28., 29., 28., 27., 26., 25., 26., 27.]
     for test in tests:
       # this needs to be updated to use self.analyze(tick,level, reportChan)
-      self.append( test)
+      self.update( 0, test)
     print "{0}: {1}".format( self.name,  self.getString())
     for test in tests[-4:]:
       # this needs to be updated to use self.analyze(tick,level, reportChan)
-      self.reset(25)
-      self.append( test)
+      self.reset()
+      self.update( 0, test)
     print "{0}: {1}".format( self.name,  self.getString())
+# pylint: enable=too-many-instance-attributes
+
 
 
 if __name__ == "__main__":
   testTrap = Trap( 27, -1, "in", 3, name="test trap")
-  testTrap._test_()
+  testTrap.test()

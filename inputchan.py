@@ -35,7 +35,7 @@ THE SOFTWARE.
 import sys
 import random
 
-import logging
+#import logging
 import time
 import parse
 
@@ -95,7 +95,7 @@ class InputChannel (object):
       try:
         self.inFile = open(inputFileName, 'r')
       except IOError:
-        logging.error("Cannot open input file " + inputFileName)
+        #logging.error("Cannot open input file " + inputFileName)
         self.success = False
       #except Exception as e:
       #  # handle any other exception
@@ -133,7 +133,7 @@ class InputChannel (object):
         self.readMeasurement( tick)
     #convert pressures to instantaneous water level
     self.level = convertPascalsToInches (
-        self.waterColumnPressure - self.airPressure)
+      self.waterColumnPressure - self.airPressure)
     return self.tick, self.level
 
 
@@ -154,7 +154,7 @@ class InputChannel (object):
     """
     if self.type == 'random':
       airPressure = BASE_AIR_PRESSURE + random.randrange(
-          SWING_AIR_PRESSURE)
+        SWING_AIR_PRESSURE)
       waterColumnPressure = BASE_WATER_COLUMN_PRESSURE + \
           random.randrange( SWING_WATER_COLUMN_PRESSURE)
       tick = tick + DESIRED_PERIOD

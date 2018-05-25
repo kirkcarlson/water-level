@@ -23,13 +23,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
 """
 
 #### IMPORTS ####
 
 import datetime
 import sys
+from config import VERB_COMMON
 from config import VERB_DEBUG
 from config import MAX_LIST
 
@@ -128,6 +128,7 @@ class ReportChannel( object):
     Args:
       tick: (float) epoch for the event time stamp
       processName: (str) name of the process detecting the event
+         limit to 4 characters, e.g., Wake, Wave, Levl, Sech, etc.
       message: (str) String to be reported
       verbosity: (int) Interest level of this event.
     
@@ -138,13 +139,14 @@ class ReportChannel( object):
       None
     """
 
-    dateString = '{:%b %d %H:%M:%S}'.format(
-        datetime.datetime.fromtimestamp (float(tick)))
     if verbosity >= self.verbosity:
-      self.writeln( "{:<16} {:<20} {}".format(
-          dateString, processName, message))
+      dateString = '{:%b %d %H:%M:%S}'.format(
+        datetime.datetime.fromtimestamp (float(tick)))
+      self.writeln( "{:<16} {:<5} {}".format(
+        dateString, processName, message))
 
-  def prReport( self, message):
+
+  def prReport( self, tick, message):
     """send a report message to the ReportChannel.
   
     Args:
@@ -157,13 +159,15 @@ class ReportChannel( object):
       None
     """
 
-    self.writeln( message)
+    if VERB_COMMON <= self.verbosity:
+      dateString = '{:%b %d %H:%M:%S}'.format(
+        datetime.datetime.fromtimestamp (tick) )
+      self.writeln( "{:<16} {:<5} {}".format(
+        dateString, "", message))
 
 
   def prDebug( self, message):
     """print debug statements controlled by the verposity.
-  
-    Args:
       message: (str) String to be reported
     
     Returns:
@@ -183,6 +187,7 @@ class ReportChannel( object):
     Args:
       tick: (float) epoch for the event time stamp
       processName: (str) name of the process detecting the event
+         limit to 4 characters, e.g., Wake, Wave, Levl, Sech, etc.
       message: (str) String to be reported
       verbosity: (int) Interest level of this event.
     
@@ -194,9 +199,9 @@ class ReportChannel( object):
     """
   
     dateString = '{:%b %d %H:%M:%S}'.format(
-        datetime.datetime.fromtimestamp (tick))
+      datetime.datetime.fromtimestamp (tick))
     if verbosity >= self.verbosity:
-      print "{:<16} {:<20} {}".format(dateString, processName, message)
+      print "{:<16} {:<5} {}".format(dateString, processName, message)
 
 
 #### FUNCTIONS ####

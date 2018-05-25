@@ -7,9 +7,6 @@ water-level a module for measuring water levels
 
 Copyright (c) 2016-2018 Kirk Carlson, All Rights Reserved
 
-Portions Copyright (c) 2014 Adafruit Industries
-Author: Tony DiCola
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -31,91 +28,32 @@ THE SOFTWARE.
 
 BUGS:
 
-1 Have to make a bigger distinction between instantaneous wave height or
+1 differentiate between instantaneous wave height or
 sea wave height and the peak value of a wave. Doing stats on the instantaneous
 value has limited value, because the mean should be zero as it has the DC
 component subtracted from it.
 
 2 Code is in a mixed state. It has some experimental code and some older code.
+Clean it up.
 
 3 Partial conversion to InfluxDB and Grafana show their benefits. Now need to limit
 the use of Series as the program eventually consumes all RAM...
-
-3//drop> main.py:  longWaterLevels = series.Series( "Long Water Level", "in")
-3//drop> main.py:  longWaterLevelAves = series.Series( "Average Water Level", "in")
-3//drop> main.py:  longWaterLevelVariations = series.Series( "Ave Water Level Variations", "")
-3//drop> main.py:  longWaterLevelHighs = series.Series( "Average Water Level Highs", "in")
-3//drop> main.py:  longWaterLevelLows = series.Series( "Average Water Level Lows", "in")
-3//drop> main.py:  rawWaterLevels = series.Series( "Raw Water Level", "in")
-3>drop> main.py:  sampleTimeSeries = resamples.Resamples()
-3>drop> main.py:  sampleTimeSeries.resamples.append( resamples.Resample(
-3>drop> main.py:  spectraTimeSeries = spectra.Spectra()
-3>drop> main.py:  spectraTimeSeries.spectra.append ( spectra.Spectrum(
-3//drop> main.py:  waveBaselines = series.Series( "Wave Baseline", "in")
-3//drop> main.py:  waveHeights = series.Series( "Wave Height", "in")
-3//drop> main.py:  waveHeightAves = series.Series( "Average Wave Height", "in")
-3//drop> main.py:  waveHeightVariations = series.Series( "Wave Height Variations", "in")
-3//drop> main.py:  waveTimes = series.Series( "Wave Times", "s")
-3//drop> main.py:  waveTimes2 = series.Series( "Wave Times2", "s")
-3//drop> main.py:  wavePeaks = series.Series( "Wave Peaks", "in")
-3//drop> main.py:  wavePeaks2 = series.Series( "Wave Peaks2", "in")
-3//drop> main.py:  wavePeriods = series.Series( "Wave Periods", "s")
-3//drop> main.py:  wavePeriods2 = series.Series( "Wave Periods2", "s")
-3//drop> main.py:  wavePowers = series.Series( "Wave Power", "nw?")
-3//drop> main.py:  wavePowers2 = series.Series( "Wave Power2", "nw?")
-3//drop> main.py:  wavePowerVariations = series.Series( "Wave Power Variations", "")
-3//drop> main.py:  wavePowerVariations2 = series.Series( "Wave Power Variations2", "")
-
-3>drop> main.py:  sampleTimeSeries.resamples[-1]))
-
-4 need to find things that use the last element of a list [-1]
-4//drop>cluster.py:      endTime = self.events[-1]["time"]
-4//drop>level.py:      waveHeight = level - self.stats.averages[1][-1]
-4//drop>level.py:      # waveHeight = level - self.stats.averages[1][-1]
-4//drop>level.py:      #waveHeight = self.stats.averages[0][-1] - self.stats.averages[1][-1]
-4//drop>level.py:      # was using waveHeight = shortAves[-1] - longAves[-1]
-4//drop>main.py:  ###longWaterLevel.analyze( currentTick, waterLevel.stats.averages[2][-1],
-4//drop>main.py:    waterLevelChangeRate1Minute = ( longWaterLevels.values[-1] -
-4//drop>main.py:    waterLevelChangeRate5Minute = ( longWaterLevels.values[-1] -
-4//drop>main.py:    waterLevelChangeRate15Minute = ( longWaterLevels.values[-1] -
-4//drop>main.py:              "response" : spectrum.responses[-1]
-4//drop>main.py:              "response" : spectrum.responses[-1]
-4//drop>main.py:              "response" : spectrum.responses[-1]
-4//drop>main.py:              "response" : spectrum.responses[-1]
-4>drop>main.py:        sampleTimeSeries.resamples[-1]))
-4>drop>main.py:        sampleTimeSeries.resamples[-1]))
-4//drop>main.py:    #waveHeight = waterLevel.waveHeights[-1]
-4//drop>plot.py:  baseTime = times [-1]
-4//drop>plot.py:    path = fileTimePng (baseName, times[-1])
-4//drop>plot.py:    timeFirstName = fileTimeFirstPng (baseName, times[-1])
-4//drop>plot.py:    path = fileTimePng (baseName, times[-1])
-4//drop>plot.py:    timeFirstName = fileTimeFirstPng (baseName, times[-1])
-4//drop>plot.py:  baseTime = pSpectra.times[-1]
-4//drop>plot.py:        path = fileTimePng (name, pSpectra.times[-1],
-4//drop>plot.py:        path = fileTimePng (name, pSpectra.times[-1])
-4//drop>rawwaves.py:    #                           self.powers.averages[1][-1])
-4>drop>spectra1.py:    specs.spectra.append ( Spectrum( samples.resamples[-1]))
-4>drop>spectra.py:    specs.spectra.append ( Spectrum( samples.resamples[-1]))
-4//drop>stats.py:        aveage.append( util.runningAverage( average[-1], value,
-4//drop>stats.py:            self.averages[0][-1] * self.averages[0][-1],
-4//drop>stats.py:        diff = self.sumOfSquares -(self.averages[1][-1] * self.averages[1][-1])
-4//drop>stats.py:        self.coefficientOfVariations.append( self.standardDeviations[-1] /\
-4//drop>stats.py:            self.averages[1][-1] * 100) # percent
-4//drop>stats.py:        mean = average[-1]
-4//drop>stats.py:        mean = self.averages[1][-1] # use updated medium for the mean
-4//drop>stats.py:          self.averages[0][-1],
-4//drop>stats.py:          self.standardDeviations[-1],
-4//drop>stats.py:          self.coefficientOfVariations[-1])
-4//drop>stats.py:      print "stats mean:{0:.2f}".format( self.averages[0][-1])
-4//drop>stats.py:        "{:5.2f}".format(self.values[-1])) )
-4//drop>stats.py:          "{:5.2f}".format( self.averages[i][-1])) )
-4//drop>stats.py:          "{:5.2f}".format( self.standardDeviations[-1]) ))
-4//drop>stats.py:          "{:5.2f}".format( self.coefficientOfVariations[-1]) ))
-4>//drop>watch.py:  levelWatch.report( times[-1], outChan) # print watch stats
-
-5 // get rid of most (all?) of the plot stuff
+How to avoid lists in Python?
 
 6 add plotting of statistics stuff...anything that uses a Stats object or Average object
+cluster.py:    self.powerAverage = average.A<type 'type'>: type object 'Resamples' has no attribute 'resamples'
+kirk@onyx:~/dev/water-level$ grep waveLengthSamples *py
+verage( "Wave Power Average", "nW?", 500)
+//main.py:  longWaterLevelAve = average.Average( "Averaged Water Level", "in",
+//main.py:  medWaterLevelAve = average.Average( "Wave Baseline Water Level", "in",
+main.py:  waveHeightAve = average.Average( "Average Wave Height", "in", 20)
+main.py:  longWaterLevelStats =  stats.Stats( "Average Water Level", "in", 20)
+main.py:  waveHeightStats = stats.Stats( "Wave Height", "in", 20)
+main.py:  wavePowerStats = stats.Stats( "Wave Power", "nw?", 20)
+wave.py:    self.peaks = stats.Stats( "Wave Peaks", "in", 3*30) # 3 seconds
+wave.py:    self.periods = stats.Stats( "Wave Periods", "s", 3*30) # 3 seconds
+wave.py:    self.powers = stats.Stats( "Wave Powers", "nw/ft?", 3*30) # 3 seconds
+are the last three redundant?
 
 7 add High/low registers, plotting and candlestick plots
   add hilo for water level hourly daily, weekly
@@ -125,8 +63,55 @@ the use of Series as the program eventually consumes all RAM...
 8 watches can be greatly simplified, they should just check against a threshold with
 amount of hysteresis.
 
-9 consolodate routines that communicate with grafana/influxdb into a module
+* shorten SendMeasurementLevel so that it fits on one line ALL the time
 
+// change append to update when not appending to a list
+//HighLow
+//Average
+//Stats
+cluster.py:    #self.events.append ( { 'time': self.clusterTick,
+level.py:    self.times.append( tick)
+level.py:    self.levels.append( level)
+//lowpass.py:  def append( self, value):
+//lowpass.py:    self.members.append(value)
+//lowpass.py:      lp = self.append( test)
+main.py:  longWaterLevels.append( longAve)
+main.py:  openFileHandles.append( inChan)
+main.py:  openFileHandles.append( outChan)
+main.py:    waveHeightAve2 = waveHeightLowPass.append( instantWaveHeight)
+resamples.py:    #  resamples.append( Resample( config, tick, value))
+resamples.py:      self.levels.append( value)
+resamples.py:      self.levels.append( interpolate( self.resamplingDueTick, tick, value,
+sched.py:    self.tasks.append ( {
+sched.py:            self.tasks.append ( {
+series.py:  def append( self, value):
+series.py:      value: (float) value to be appended to time series
+series.py:    self.values.append( value)
+series.py:      self.append(test)
+spectra.py:    self.times.append( currentTime)
+spectra.py:      #print "size of sampleBuffer after first append ", len( sampleBuffer)
+spectra.py:          #print "size of sampleBuffer after subsequent append ",
+spectra.py:      #print "size of sampleBuffer after appends ", len( sampleBuffer)
+spectra.py:      # append response to time series
+spectra.py:      self.responses.append( abs(fft[ frequencyOfInterestIndex]))
+spectra.py:    samples.resamples.append(
+spectra.py:    specs.spectra.append ( Spectrum( samples.resamples))
+spectra.py:    samples.resamples.append( resamples.Resample( period, tick, value))
+spectra.py:    specs.spectra.append ( Spectrum( samples.resamples[-1]))
+//trap.py:  def append( self, value):
+//trap.py:      self.append( test)
+//trap.py:      self.append( test)
+//watch.py:    rates.append( RateTrigger ( "level rate " + str(i),
+//wave.py:    self.times.append(tick)
+//wave.py:    self.peaks.append(peak)
+//wave.py:    self.periods.append(period)
+//wave.py:    self.powers.append(power)
+
+
+* Not all of the Stats variables declared are being used
+// waveHeightTrap is not being updated
+
+BUG
 
 """
 #### IMPORTS ####
@@ -134,33 +119,31 @@ amount of hysteresis.
 import sys
 import datetime
 import math
-import json
 
-import sched
-import config
+import average
 import cluster
 import dominant
 import findwave
-import inputchan
+import highlow
 import influx
-import level
-#import plot
+import inputchan
+import lowpass
+import mysched
 import report
 import resamples
-import spectra
-#import stats
-import wave
-
-
-###NEW
-import average
-import highlow
-import lowpass
-import series
-import stats2
+import stats
 import trap
-###NEW
-
+from config import BOAT_LENGTHS
+from config import GRAVITY_CONSTANT
+from config import CLUSTER_WINDOW
+from config import TARGET_PERIODS
+from config import SEND_START_RESPONSES
+from config import LONG_AVE_SAMPLES
+from config import MEDIUM_AVE_SAMPLES
+from config import CLUSTER_MULTIPLIER
+from config import SEND_RAW_MEASUREMENTS
+from config import SEND_RAW_WAVES
+from config import INFLUXDB_DATABASE
 
 #### LOCAL CONSTANTS ####
 
@@ -194,30 +177,22 @@ DUR_30_MINUTES =     30 * 60
 #### GLOBALS ####
 
 outChan = None
-inChan = None
 currentTick = None
-tickdiff = None
-mainSched = sched.Schedule()
+mainSched = mysched.Schedule()
+ifx = None # influxdb channel
 
-waterLevel = None
-longWaterTicks = None
-longWaterLevelHiLoTicks = None
-rawWave = None
 dominantPeriod = None
-sampleTimeSeries = None
-spectraTimeSeries = None
+waveLengthSamples = None
+periodSamples = None
 
 longWaterLevel = None
 longWaterLevelAve = None
 longWaterLevelStats = None
-longWaterLevelHourlyHighLow = None
-longWaterLevelDailyHighLow = None
-longWaterLevelWeeklyHighLow = None
-longWaterLevelMonthlyHighLow = None
-waterLevelChangeRate1Minutes = None
-waterLevelChangeRate5Minutes = None
-waterLevelChangeRate10Minutes = None
-waterLevelChangeRate15Minutes = None
+longWaterLevels = []
+levelHourlyHighLow = None
+levelDailyHighLow = None
+levelWeeklyHighLow = None
+levelMonthlyHighLow = None
 medWaterLevelAve = None
 waveHeightLowPass = None
 waveHeightHourlyHighLow = None
@@ -226,9 +201,7 @@ waveHeightWeeklyHighLow = None
 waveHeightMonthlyHighLow = None
 waveHeightAve = None
 waveHeightStats = None
-rawWave2 = None
 wavePowerStats = None
-wavePowerStats2 = None
 waveCluster = None
 
 
@@ -298,7 +271,7 @@ def processCommandLineArguments():
   #print "args: ", str( sys.argv)
   try:
     opts, remainder = getopt.getopt( sys.argv[1:], "hi:o:", [
-        "ifile=", "ofile="])
+      "ifile=", "ofile="])
     if remainder != []:
       print errorMessage
       sys.exit(2)
@@ -324,11 +297,12 @@ def processCommandLineArguments():
   return inputFileName, outputFileBaseName
 
 
-def reportCluster( currentTime):
-  """report on the wave clusters in the past config.CLUSTER_WINDOW
+def reportCluster( tick):
+  """report on the wave clusters in the past CLUSTER_WINDOW
+  This is a scheduled routine, so limited arguments.
 
   Args:
-    None
+    tick: (float)(s) Epoch of the end of the cluster
   
   Returns:
     None
@@ -336,374 +310,296 @@ def reportCluster( currentTime):
   Raises:
     None
   """
-  global cluster
-  global currentTick
 
-  #clusterReport( currentTick)
-  influx.sendMeasurementLevel( currentTick, "cluster", "energy", waveCluster.energy)
-  influx.sendMeasurementLevel( currentTick, "cluster", "distance", waveCluster.distance)
-  waveCluster.report( currentTick)
-  waveCluster.reset( currentTick)
+  # the following doesn't look quite right...
+  print "DEBUG clusterReport marking the end of a cluster"
+  ifx.sendPoint( tick, "cluster", "energy", waveCluster.energy)
+  ifx.sendPoint( tick, "cluster", "distance", waveCluster.distance)
+  ifx.sendPoint( tick, "cluster", "period", waveCluster.maxPeriod+0)
+  waveCluster.prReport( tick)
+  waveCluster.reset( tick)
 
 
-def updateLongWaterLevel( currentTime):
+def updateLongWaterLevel( tick):
   """update the long water level time series (once a minute)
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
+  #pylint: disable=global-statement
   global longWaterLevels
-  from influx import influxWrites
+  global longWaterLevelAve
+  global levelHourlyHighLow
+  global levelDailyHighLow
+  global levelWeeklyHighLow
+  global levelMonthlyHighLow
+  #pylint: enable=global-statement
 
   longAve = longWaterLevelAve.average
   print "{0:%Y-%m-%dT%H:%M:%S.%f-0400 updateLongWaterLevels {1}}"\
-      .format( datetime.datetime.fromtimestamp(currentTick),
-               influx.influxWrites)
-  influx.influxWrites = 0
+          .format( datetime.datetime.fromtimestamp(tick),
+                   ifx.influxWrites)
+  ifx.reset()
   longWaterLevels.append( longAve)
-  longWaterLevelHourlyHighLow.append( longAve)
-  longWaterLevelDailyHighLow.append( longAve)
-  longWaterLevelWeeklyHighLow.append( longAve)
-  longWaterLevelMonthlyHighLow.append( longAve)
+  levelHourlyHighLow.update( longAve)
+  levelDailyHighLow.update( longAve)
+  levelWeeklyHighLow.update( longAve)
+  levelMonthlyHighLow.update( longAve)
 
   # calculate the water level change rates
   lenLevels = len( longWaterLevels)
   if lenLevels > 1+1:
-    waterLevelChangeRate1Minute = ( longAve -
-                                    longWaterLevels[-(1+1)]) * 60
+    levelChange1Min = ( longAve - longWaterLevels[-(1+1)]) * 60
   else:
-    waterLevelChangeRate1Minute = 0
+    levelChange1Min = 0
 
   if lenLevels > 1+5:
-    waterLevelChangeRate5Minute = ( longAve -
-                                    longWaterLevels[-(1+5)]) * 12
+    levelChange5Min = ( longAve - longWaterLevels[-(1+5)]) * 12
   else:
-    waterLevelChangeRate5Minute = 0
+    levelChange5Min = 0
 
-  if lenLevels > 1+10:
-    waterLevelChangeRate10Minute = ( longAve -
-                                     longWaterLevels[-(1+10)]) * 6
-  else:
-    waterLevelChangeRate10Minute = 0
-
-  if lenLevels > 1+15:
-    waterLevelChangeRate15Minute = ( longAve -
-                                     longWaterLevels[-(1+15)]) * 4
-  else:
-    waterLevelChangeRate15Minute = 0
-
-  if lenLevels > 30:
-    longWaterLevels = longWaterLevels[-15:]
+  # trim list
+  if lenLevels > 10:
+    longWaterLevels = longWaterLevels[-5:]
 
   # send long term water levels to InfluxDB for graphing
-  influx.sendMeasurementLevel( currentTime,
-                               "waterLevel",
-                               "longAve",
-                               longAve)
-  influx.sendMeasurementLevel( currentTime,
-                               "waterLevel",
-                               "changeRate1Minute",
-                               waterLevelChangeRate1Minute)
-  influx.sendMeasurementLevel( currentTime,
-                               "waterLevel",
-                               "changeRate5Minute",
-                               waterLevelChangeRate5Minute)
-  influx.sendMeasurementLevel( currentTime,
-                               "waterLevel",
-                               "changeRate10Minute",
-                               waterLevelChangeRate10Minute)
-  influx.sendMeasurementLevel( currentTime,
-                               "waterLevel",
-                               "changeRate15Minute",
-                               waterLevelChangeRate15Minute)
+  ifx.sendPoint( tick, "waterLevel", "longAve", longAve)
+  ifx.sendPoint( tick, "waterLevel", "changeRate1Minute",
+                 levelChange1Min)
+  ifx.sendPoint( tick, "waterLevel", "changeRate5Minute",
+                 levelChange5Min)
 
 
-def waterLevelReport15( currentTime):
-  """report on the water level in the last 15 minutes
+def hourlyReport( tick):
+  """report on the variables being collected
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
+  outChan.prReport( tick, "Hourly wave height ave " + waveHeightAve)
+  outChan.prReport( tick, "Hourly wave height high " +
+                    waveHeightHourlyHighLow.high)
+  outChan.prReport( tick, "Hourly wave height high " +
+                    waveHeightHourlyHighLow.low)
 
-  ###Generate the 15 minute water level report.###
-  waterLevel.report( currentTime, outChan)
-  waterLevel.watch.reset( currentTick)
 
-
-def longWaterLevelHourlyReport( currentTime):
+def levelHourlyReport( tick):
   """report on the long term water level in the last hour
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
-  longWaterLevelHourlyHighLow.report( currentTime, outChan)
-  longWaterLevelHourlyHighLow.reset()
+  outChan.prReport( tick, "Hourly water Level " + longWaterLevel)
+  outChan.prReport( tick, "Hourly water Level " + levelHourlyHighLow.high)
+  outChan.prReport( tick, "Hourly water Level " + levelHourlyHighLow.low)
+  levelHourlyHighLow.report( tick, outChan)
+  levelHourlyHighLow.reset()
 
 
-def longWaterLevelDailyReport( currentTime):
+def levelDailyReport( currentTime):
   """report on the long term water level in the last day
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
-  longWaterLevelDailyHighLow.report( currentTime, outChan)
-  longWaterLevelDailyHighLow.reset()
+  levelDailyHighLow.report( currentTime, outChan)
+  levelDailyHighLow.reset()
 
 
-def longWaterLevelWeeklyReport( currentTime):
+def levelWeeklyReport( currentTime):
   """report on the long term water level in the last week
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
   if datetime.datetime.fromtimestamp(currentTick).weekday == 0:
-    longWaterLevelWeeklyHighLow.report( currentTime, outChan)
-    longWaterLevelWeeklyHighLow.reset()
+    levelWeeklyHighLow.report( currentTime, outChan)
+    levelWeeklyHighLow.reset()
 
 
-def longWaterLevelMonthlyReport( currentTime):
+def levelMonthlyReport( currentTime):
   """report on the long term water level in the past month
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
   if datetime.datetime.fromtimestamp(currentTick).day == 1:
-    longWaterLevelMonthlyHighLow.report( currentTime, outChan)
-    longWaterLevelMonthlyHighLow.reset()
-
-
-def waveReport15( currentTime):
-  """report on wave activity in the last 15 minutes
-
-  Args:
-    None
-  
-  Returns:
-    None
-  
-  Raises:
-    None
-  """
-
-  rawWave.report( currentTime, outChan)
-  rawWave.peakwatch.reset( currentTime) # other periods will want their own watch
-  rawWave.periodwatch.reset( currentTime)
-  rawWave.powerwatch.reset( currentTime) 
+    levelMonthlyHighLow.report( currentTime, outChan)
+    levelMonthlyHighLow.reset()
 
 
 def doFFTs( currentTime):
   """do an FFT on each of the resampled data streams
+  This is a scheduled routine, so limited arguments.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
-  spectraTimeSeries.evaluate( currentTime)
-  sendLimitedFftSamples()
+  waveLengthSamples.fft()
+  periodSamples.fft()
 
-  sampleTimeSeries.freshen() # prescribed amount
-  spectraTimeSeries.freshen( 10 * 5) # ten seconds worth on 200ms..
+  #sendAllFftSamples( currentTime)
+  sendLimitedFftSamples( currentTime)
+
+  waveLengthSamples.freshen()
+  periodSamples.freshen()
 
 
-def sendFftSamples():
+def sendAllFftSamples( tick):
   """send FFT samples to the InfluxDB server
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
-  # send measurements to the influxdb
+  for sample in waveLengthSamples.resamples:
+    if sample.response is not None:
+      ifx.sendTaggedPoint( tick, "spectrum",
+                           "waveLength", sample.waveLength,
+                           "waveResponse", sample.response)
+      if SEND_START_RESPONSES:
+        ifx.sendTaggedPoint( tick - sample.cyclePeriod, "spectrum",
+                             "waveLength", sample.waveLength, 
+                             "startBoatResponse", sample.response)
 
-  index = 0
-  # should only do the following once...
-  numberOfBoatLengths = len( config.BOAT_LENGTHS)
-  
-  for spectrum in spectraTimeSeries.spectra:
-    if len( spectrum.responses) >= 1:
-      response = spectrum.responses[-1]
-      if index < numberOfBoatLengths:
-        boatLength = config.BOAT_LENGTHS[ index]
-        cyclePeriod = math.sqrt (boatLength / config.GRAVITY_CONSTANT/\
-                2 /math.pi) # ft/s
-        influx.sendTaggedMeasurementLevel( currentTick,
-                                           "spectrum",
-                                           "boatLength",
-                                           boatLength,
-                                           "boatResponse",
-                                           response)
-        '''
-        influx.sendTaggedMeasurementLevel( currentTick - cyclePeriod,
-                                           "spectrum",
-                                           "boatLength",
-                                           boatLength,
-                                           "startBoatResponse",
-                                           response)
-        '''
-      else:
-        period = config.TARGET_PERIODS[ index - numberOfBoatLengths]
-        influx.sendTaggedMeasurementLevel( currentTick,
-                                           "spectrum",
-                                           "period",
-                                           period,
-                                           "periodicResponse",
-                                           response)
-        '''
-        influx.sendTaggedMeasurementLevel( currentTick - period,
-                                           "spectrum",
-                                           "period",
-                                           period,
-                                           "startPeriodicResponse",
-                                           response)
-        '''
-    index = index + 1
-      
+  for sample in periodSamples.resamples:
+    if sample.response is not None:
+      ifx.sendTaggedPoint( tick, "spectrum", "period",
+                           sample.period, "periodResponse", sample.response)
+      if SEND_START_RESPONSES:
+        ifx.sendTaggedPoint( tick - sample.cyclePeriod, "spectrum",
+                             "period", sample.period,
+                             "startPeriodResponse", sample.response)
 
-def sendLimitedFftSamples():
+
+
+
+def sendLimitedFftSamples(tick):
   """send limited FFT samples to the InfluxDB server
 
+  Note: this is using a postfix time and not a prefix time
+
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
-  # send measurements to the influxdb
-
-  index = 0
-  # should only do the following once...
-  numberOfBoatLengths = len( config.BOAT_LENGTHS)
-  boatResponse = 0
-  spectraResponse = 0
-  boatLength = 0
+  waveLengthResponse = 0
+  waveLength = 0
+  periodResponse = 0
   period = 0
-  
-  # find the dominant response by wavelength and period
-  for spectrum in spectraTimeSeries.spectra:
-    if len( spectrum.responses) >= 1:
-      response = spectrum.responses[-1]
-      if index < numberOfBoatLengths:
-        if response > boatResponse:
-          boatResponse = response
-          boatLength = config.BOAT_LENGTHS[ index]
-          cyclePeriod = math.sqrt (boatLength / config.GRAVITY_CONSTANT/\
-                2 /math.pi) # ft/s
-      else:
-        if response > spectraResponse:
-          spectraResponse = response
-          period = config.TARGET_PERIODS[ index - numberOfBoatLengths]
-    index = index + 1
-  influx.sendTaggedMeasurementLevel( currentTick,
-                                     "spectrum",
-                                     "boatLength",
-                                     boatLength,
-                                     "boatResponse",
-                                     boatResponse)
-  influx.sendTaggedMeasurementLevel( currentTick,
-                                     "spectrum",
-                                     "period",
-                                     period,
-                                     "periodicResponse",
-                                     spectraResponse)
-  if config.SEND_START_RESPONSES:
-    influx.sendTaggedMeasurementLevel( currentTick - cyclePeriod,
-                                       "spectrum",
-                                       "boatLength",
-                                       boatLength,
-                                       "startBoatResponse",
-                                       boatResponse)
-    influx.sendTaggedMeasurementLevel( currentTick - period,
-                                       "spectrum",
-                                       "period",
-                                       period,
-                                       "startPeriodicResponse",
-                                       spectraResponse)
-  dominantPeriod.update( period, spectraResponse)
-      
 
-def schedClusterEnd( someFunction, currentTime, period):
-  """schedule the end of a cluster
+  # find the dominant response by wavelength
+  for sample in waveLengthSamples.resamples:
+    if sample.response is not None:
+      if sample.response > waveLengthResponse:
+        waveLengthResponse = sample.response
+      waveLength = sample.waveLength
+
+  # find the dominant response by period
+  for sample in periodSamples.resamples:
+    if sample.response is not None:
+      if sample.response > periodResponse:
+        periodResponse = sample.response
+      period = sample.cyclePeriod
+
+  ifx.sendTaggedPoint( tick, "spectrum", "waveLength", waveLength,
+                       "waveLengthResponse", waveLengthResponse)
+  ifx.sendTaggedPoint( tick, "spectrum", "period", period,
+                       "periodicResponse", periodResponse)
+  dominantPeriod.update( period, waveLength)
+
+
+def schedClusterEnd( currentTime, period):
+  """schedule the end of a cluster function
 
   Args:
     None
-  
+
   Returns:
-    processID from sched.schedule()
-  
+    processID from mysched.schedule()
+
   Raises:
     None
   """
-  return mainSched.schedule(
-    reportCluster,
-    #someFunction(), # needs another parameter, but that binds the value
-    currentTime,
-    0,
-    period)
+  return mainSched.schedule( reportCluster,
+                             currentTime,
+                             0,
+                             period)
 
 
 def unschedClusterEnd( taskID):
-  """unschedule the end of a cluster
+  """unschedule the end of a cluster function
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
@@ -711,45 +607,40 @@ def unschedClusterEnd( taskID):
   mainSched.unschedule( taskID)
 
 
+#### MAIN ####
+
 #pylint: disable=too-many-locals
 #pylint: disable=too-many-statements
 #pylint: disable=global-statement
-def test():
-  """tests the functions of this module
+def main():
+  """Initialize various data structures and orchestrate the measurement
+  and recording activities.
 
   Args:
     None
-  
+
   Returns:
     None
-  
+
   Raises:
     None
   """
 
   global outChan
-  global inChan
   global currentTick
-  global tickDiff
+  global ifx
 
-  global waterLevel
-  global rawWave
-  global rawWave2
   global dominantPeriod
-  global sampleTimeSeries
-  global spectraTimeSeries
+  global waveLengthSamples
+  global periodSamples
 
   global longWaterLevelAve
   global longWaterLevelStats
-  global longWaterLevelHourlyHighLow
-  global longWaterLevelDailyHighLow
-  global longWaterLevelWeeklyHighLow
-  global longWaterLevelMonthlyHighLow
+  global levelHourlyHighLow
+  global levelDailyHighLow
+  global levelWeeklyHighLow
+  global levelMonthlyHighLow
   global longWaterLevels
-  global longWaterLevelHiLoTicks
-  global waterLevelChangeRate1Minutes
-  global waterLevelChangeRate5Minutes
-  global waterLevelChangeRate15Minutes
   global medWaterLevelAve
   global waveHeightHourlyHighLow
   global waveHeightDailyHighLow
@@ -760,14 +651,12 @@ def test():
   global waveHeightAve
 
   global wavePowerStats
-  global wavePowerStats2
   global waveCluster
 
 
-  # do some initialization stuff
+  # initialze the input and output streams
   inputFileName, outputFileBaseName = processCommandLineArguments()
 
-  # initialize input channel
   inChan = inputchan.InputChannel( inputFileName)
   if not inChan.success:
     print errorMessage
@@ -775,50 +664,33 @@ def test():
   openFileHandles = []
   openFileHandles.append( inChan)
 
-  # initialize output channel
   outChan = report.ReportChannel( outputFileBaseName)
   #outChan = report.ReportChannel( "")
   openFileHandles.append( outChan)
-  influx.init("waterlevel")
+  ifx = influx.Influx(INFLUXDB_DATABASE)
 
-  # initialize data structures
   setupGracefulExit( openFileHandles)
 
+
+  ## MAIN initialize data structures
+
   currentTick, currentLevel = inChan.getWaterLevel( currentTick)
-
-  walltime = datetime.datetime.now()
-  # find number of days between measurement and now
-  daydiff = (walltime - datetime.datetime.fromtimestamp(currentTick)).days
-  tickDiff = daydiff * 24 * 3600 # offset to yesterday for now
-
-  waterLevel = level.Level( "Water Level", currentLevel, currentTick, 3.0,
-                            [   ("Short", 2),     # 2 samples
-                                ("Medium", 6*30), # 6 seconds
-                                ("Long", 60*30)] # 1 minute
-                          )
 
   findWave = findwave.FindWave() # determine wave peaks and periods
   dominantPeriod = dominant.Dominant() # determine dominant Period and response
 
   instantWaveHeight = 0
-  rawWave = wave.Wave( currentTick) # wave height time series
-                                          # (not sure this is used...)
   longWaterLevels = []
-  rawWave2 = wave.Wave( currentTick) # filtered wave height time series
-  findWave2 = findwave.FindWave() # determine need wave peaks
   longWaterLevelAve = average.Average( "Averaged Water Level", "in",
-                                       config.LONG_AVE_SAMPLES)
-  longWaterLevelStats =  stats2.Stats2( "Average Water Level", "in", 20)
+                                       LONG_AVE_SAMPLES)
+  longWaterLevelStats =  stats.Stats( "Average Water Level", "in", 20)
 
-  longWaterLevelHourlyHighLow = highlow.HighLow( "Water Level Limits", "in")
-  longWaterLevelDailyHighLow = highlow.HighLow( "Water Level Limits", "in")
-  longWaterLevelWeeklyHighLow = highlow.HighLow( "Water Level Limits", "in")
-  longWaterLevelMonthlyHighLow = highlow.HighLow( "Water Level Limits", "in")
-  waterLevelChangeRate1Minutes = []
-  waterLevelChangeRate5Minutes = []
-  waterLevelChangeRate15Minutes = []
+  levelHourlyHighLow = highlow.HighLow( "Water Level Limits", "in")
+  levelDailyHighLow = highlow.HighLow( "Water Level Limits", "in")
+  levelWeeklyHighLow = highlow.HighLow( "Water Level Limits", "in")
+  levelMonthlyHighLow = highlow.HighLow( "Water Level Limits", "in")
   medWaterLevelAve = average.Average( "Wave Baseline Water Level", "in",
-                                      config.MEDIUM_AVE_SAMPLES)
+                                      MEDIUM_AVE_SAMPLES)
   waveHeightAve = average.Average( "Average Wave Height", "in", 20)
   waveHeightHourlyHighLow = highlow.HighLow( "Wave Height Limits", "in")
   waveHeightDailyHighLow = highlow.HighLow( "Wave Height Limits", "in")
@@ -830,127 +702,87 @@ def test():
   waveHeightTrap = trap.Trap( 4, -1, "in", 30,
                               name="Wave Height",
                               port=outChan)
-  waveHeightStats = stats2.Stats2( "Wave Height", "in", 20)
-
-  wavePowerStats = stats2.Stats2( "Wave Power", "nw?", 20)
-  wavePowerStats2 = stats2.Stats2( "Wave Power Stats22", "nw?", 20)
- 
-  waveCluster = cluster.Cluster( "Wave Clusters",
-                                 outChan,
-                                 config.CLUSTER_MULTIPLIER )
+  waveHeightStats = stats.Stats( "Wave Height", "in", 20)
+  wavePowerStats = stats.Stats( "Wave Power", "nw/ft?", 20)
+  waveCluster = cluster.Cluster( "Wave Clusters", outChan, CLUSTER_MULTIPLIER)
   clusterTaskID = None
-  
-  # initialize resampling time series and related spectral response time series
-  sampleTimeSeries = resamples.Resamples()
-  spectraTimeSeries = spectra.Spectra()
 
-  for boatLength in config.BOAT_LENGTHS:
-    # convert boat length to cyclePeriod
-    waveSpeed = math.sqrt (config.GRAVITY_CONSTANT * boatLength / 2 /math.pi)
-    # in ft/s
-    cyclePeriod = boatLength / waveSpeed # s
-    legend = "{0}' boat".format( boatLength) #'
+  waveLengthSamples = resamples.Resamples()
+  for waveLength in BOAT_LENGTHS:
+    waveSpeed = math.sqrt (GRAVITY_CONSTANT * waveLength / 2 /math.pi)
+        # ft/s
+    cyclePeriod = waveLength / waveSpeed # s
+
     #pylint: disable=E1305
-    print "Boat length {0:n} has period {1:.2f} and speed {2:.2f}".format(
-       boatLength,
-       cyclePeriod,
-       waveSpeed)
+    print "Wave length {0:n} has period {1:.2f} and speed {2:.2f}".format(
+      waveLength,
+      cyclePeriod,
+      waveSpeed)
     #pylint: enable=E1305
 
-    # create wave height resample object inside the resamples object
-    sampleTimeSeries.resamples.append( resamples.Resample(
-        cyclePeriod, currentTick, instantWaveHeight, legend))
+    waveLengthSamples.resamples.append(
+      resamples.Resample( cyclePeriod, currentTick, instantWaveHeight))
+    waveLengthSamples.resamples[-1].waveLength = waveLength # sort of a cheat...
 
-    # create spectrum object inside the spectra object
-    #   including a pointer back to the corresponding resample object
-    spectraTimeSeries.spectra.append ( spectra.Spectrum(
-        sampleTimeSeries.resamples[-1]))
+  periodSamples = resamples.Resamples()
+  for period in TARGET_PERIODS:
+    periodSamples.resamples.append(
+      resamples.Resample( period, currentTick, instantWaveHeight))
 
-  for period in config.TARGET_PERIODS:
-    legend = "{}s period".format( period)
 
-    # create wave height resample object inside the resamples object
-    sampleTimeSeries.resamples.append( resamples.Resample(
-        period, currentTick, instantWaveHeight, legend))
+  ## MAIN schedule periodic tasks
 
-    # create spectrum object inside the spectra object
-    #   including a pointer back to the corresponding resample object
-    spectraTimeSeries.spectra.append ( spectra.Spectrum(
-        sampleTimeSeries.resamples[-1]))
- 
-
-  # schedule periodic tasks
   mainSched.schedule( updateLongWaterLevel, currentTick, EVERY_MINUTE, 0)
-  #                    EVERY_MINUTE, 0) # s/b longer
   mainSched.schedule( doFFTs, currentTick, EVERY_200_MSEC, 0)
 
-  mainSched.schedule( longWaterLevelHourlyReport, currentTick, EVERY_HOUR, 0)
-  mainSched.schedule( longWaterLevelDailyReport, currentTick, EVERY_DAY, 0)
-  mainSched.schedule( longWaterLevelWeeklyReport, currentTick, EVERY_WEEK, 0)
-  mainSched.schedule( longWaterLevelMonthlyReport, currentTick, EVERY_MONTH, 0)
+  mainSched.schedule( hourlyReport, currentTick, EVERY_HOUR, 0)
+  mainSched.schedule( levelHourlyReport, currentTick, EVERY_HOUR, 0)
+  mainSched.schedule( levelDailyReport, currentTick, EVERY_DAY, 0)
+  mainSched.schedule( levelWeeklyReport, currentTick, EVERY_WEEK, 0)
+  mainSched.schedule( levelMonthlyReport, currentTick, EVERY_MONTH, 0)
 
   print "Initialization done"
-  print "sampleTimeSeries",sampleTimeSeries
-  print "spectraTimeSeries",spectraTimeSeries
+
 
   ###MAIN LOOP
+
   #for _ in range (0, 3*60*60*30): #200000000): # limited test run
   while True: # until stopped...
     lastTick = currentTick
     lastWaveHeight = instantWaveHeight
     currentTick, currentLevel = inChan.getWaterLevel( currentTick)
     #currentTick, currentLevel = inChan.readLevel( currentTick)
-    '''
-    influx.sendMeasurementLevel( currentTick,
-                                 "waterLevel",
-                                 "waterLevel",
-                                 currentLevel)
-    '''
+    if SEND_RAW_MEASUREMENTS:
+      ifx.sendPoint( currentTick, "waterLevel", "waterLevel", currentLevel)
 
     longWaterLevelAve.update( currentLevel)
     waveBaseLine = medWaterLevelAve.update( currentLevel)
-    '''
-    influx.sendMeasurementLevel( currentTick,
-                                 "waterLevel",
-                                 "waveBaseLine",
-                                 waveBaseLine)
-    '''
+    if SEND_RAW_MEASUREMENTS:
+      ifx.sendPoint( currentTick, "waterLevel",
+                     "waveBaseLine", waveBaseLine)
 
     instantWaveHeight = currentLevel - waveBaseLine
-    '''
-    influx.sendMeasurementLevel( currentTick,
-                                 "waterLevel",
-                                 "waveHeight",
-                                 instantWaveHeight)
-    '''
+    if SEND_RAW_WAVES:
+      ifx.sendPoint( currentTick, "waterLevel",
+                     "waveHeight", instantWaveHeight)
 
     instantWaveHeightAve = waveHeightAve.update( instantWaveHeight)
-    '''
-    influx.sendMeasurementLevel( currentTick,
-                                 "waterLevel",
-                                 "aveWaveHeight",
-                                 instantWaveHeightAve)
-    '''
-    waveHeightAve2 = waveHeightLowPass.append( instantWaveHeight)
-    waveHeightStats.append( instantWaveHeight)
+    if SEND_RAW_MEASUREMENTS:
+      ifx.sendPoint( currentTick, "waterLevel",
+                     "aveWaveHeight", instantWaveHeightAve)
+    waveHeightTrap.update( currentTick, instantWaveHeight)
+    waveHeightStats.update( instantWaveHeight)
     # this really doesn't do what you want:
     #   since this is instantaneous, the mean should be = 0.
     #   This makes the coefficientOfVariation get really big, since it is
     #   StdDev/mean.
 
-    if findWave.findWave( currentTick, instantWaveHeight):
+    waveHeightAve2 = waveHeightLowPass.update( instantWaveHeight)
+    if findWave.findWave( currentTick, waveHeightAve2):
       peak = findWave.wavePeakToPeak
       period = findWave.wavePeriod
       power = findWave.wavePower
-      rawWave.analyze( currentTick, peak, period, power, outChan) # what is this doing?
-
-      wavePowerStats.append( power)
-      # want to reset dominant wave period here
-
-    if findWave2.findWave( currentTick, waveHeightAve2):
-      peak = findWave2.wavePeakToPeak
-      period = findWave2.wavePeriod
-      power = findWave2.wavePower
+      #pylint: disable=pointless-string-statement
       '''
       #if wave is also coherent  ... or is the coherent test only for clusters
       if dominantPeriod.firstPeriod == dominantPeriod.secondPeriod ==
@@ -959,51 +791,46 @@ def test():
       else:
         save power as part of the background waves
       '''
-      influx.sendMeasurementLevel( currentTick, "wave", "peak", peak)
-      influx.sendMeasurementLevel( currentTick, "wave", "period", period)
-      influx.sendMeasurementLevel( currentTick, "wave", "power", power)
+      #pylint: enable=pointless-string-statement
+      ifx.sendPoint( currentTick, "wave", "peak", peak)
+      ifx.sendPoint( currentTick, "wave", "period", period)
+      ifx.sendPoint( currentTick, "wave", "power", power)
       dominantPeriod.reset()
 
-      waveHeightHourlyHighLow.append( peak)
-      waveHeightDailyHighLow.append( peak)
-      waveHeightWeeklyHighLow.append( peak)
-      waveHeightMonthlyHighLow.append( peak)
+      waveHeightHourlyHighLow.update( peak)
+      waveHeightDailyHighLow.update( peak)
+      waveHeightWeeklyHighLow.update( peak)
+      waveHeightMonthlyHighLow.update( peak)
+
+      wavePowerStats.update( power)
 
       if waveCluster.isACluster( currentTick, peak, period, power): 
+        ifx.sendPoint( currentTick, "cluster",
+                       "threshold", waveCluster.threshold)
         if clusterTaskID is not None:
           unschedClusterEnd( clusterTaskID) # so it can be updated
           clusterTaskID = None
         else:
           waveCluster.reset( currentTick) # so it starts clean
-        waveCluster.update( currentTick, peak, period, power)
-        clusterTaskID = schedClusterEnd( reportCluster, currentTick,
-                config.CLUSTER_WINDOW)
+        waveCluster.update( currentTick, peak, period, power) 
+        clusterTaskID = schedClusterEnd( currentTick, CLUSTER_WINDOW)
 
 
     # resample raw wave for spectral analysis
-    sampleTimeSeries.evaluate ( currentTick, instantWaveHeight,
-                                lastTick, lastWaveHeight)
+    waveLengthSamples.evaluate ( currentTick, instantWaveHeight,
+                                 lastTick, lastWaveHeight)
+    periodSamples.evaluate ( currentTick, instantWaveHeight,
+                             lastTick, lastWaveHeight)
 
-    # do the timed jobs that are due
+# do the timed jobs that are due
     mainSched.execute(currentTick)
 
-  print "longWaterLevelAve", longWaterLevelAve
-  print
-  print "waveHeightAve",  waveHeightAve
-  print
-  print "waveHeightHourlyHighLow", waveHeightHourlyHighLow
-  print "waveHeightDailyHighLow", waveHeightDailyHighLow
-  print "waveHeightWeeklyHighLow", waveHeightWeeklyHighLow
-  print "waveHeightMonthlyHighLow", waveHeightMonthlyHighLow
-  print
-  print "waveHeightTrap", waveHeightTrap
-  print
-  print "waveHeightStat", waveHeightStats
   #pylint: enable=too-many-statements
   #pylint: enable=global-statement
   #pylint: enable=too-many-locals
 
 if __name__ == "__main__":
   # execute only if run as a script
-  test()
+  main()
+
 #pylint: enable=too-many-lines
