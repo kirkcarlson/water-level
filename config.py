@@ -91,8 +91,8 @@ WAVE_END = WAKE_END + len( TARGET_PERIODS)
 
 
 SHORT_AVE_SAMPLES = 5
-MEDIUM_AVE_SAMPLES = 4 * SAMPLES_PER_SECOND
-LONG_AVE_SAMPLES = 1 * 60 * SAMPLES_PER_SECOND
+BASELINE_AVE_SAMPLES = 4 * SAMPLES_PER_SECOND
+LONG_AVE_SAMPLES = 1 * 30 * SAMPLES_PER_SECOND
 PEAK_AVE_SAMPLES = 10
 PERIOD_AVE_SAMPLES = 10
 WAVE_HEIGHT_AVE_SAMPLES = 10
@@ -125,7 +125,7 @@ selectedVerbosity = VERB_DEBUG
 PLOT_SUMMARY = 1
 PLOT_MODE = PLOT_SUMMARY
 SEND_RAW_MEASUREMENTS = False # send raw measurement and associated statistics
-SEND_RAW_WAVES = True # send raw waves
+SEND_RAW_WAVES = False # send raw waves
 SEND_START_RESPONSES = False # include the spectrum where responses are timed
                              # to the start of the sample with the frequency
                              # response.

@@ -73,6 +73,7 @@ class Schedule (object):
     else:
       due = nextDue ( tick, period, offset)
 
+    # print "Schedule.schedule scheduling due:", due, tick, function, self.processID, period, offset
     self.tasks.append ( {
       'processID': self.processID,
       'function':  function,
@@ -80,6 +81,7 @@ class Schedule (object):
       'offset':    offset,
       'due':       due
     })
+    # print self.tasks
     return self.processID
 
 
@@ -120,9 +122,9 @@ class Schedule (object):
     """
     for i, task in enumerate( self.tasks):
       if tick > task['due']:
-        #print "execute popping", i, tasks
+        #print "execute popping", i, self.tasks
         dueTask = self.tasks.pop(i)
-        #print tasks
+        # print "dueTask",dueTask, dueTask['function']
         if dueTask['function'] is not None:
           dueTask['function']( tick) # execute the task
           if dueTask['period'] > 0: # recurring task
@@ -227,16 +229,16 @@ def test():
     """
     print "one time event"
 
-  mainSched = Schedule ()
+  testSched = Schedule ()
   currentTick = 0
-  mainSched.schedule (test1, currentTick, 1, 0)
-  mainSched.schedule (test2, currentTick, 5, 0)
-  mainSched.schedule (test3, currentTick, 5, 2)
-  mainSched.schedule (test4, currentTick, 0, 5) # one time event
-  print mainSched.tasks
+  testSched.schedule (test1, currentTick, 1, 0)
+  testSched.schedule (test2, currentTick, 5, 0)
+  testSched.schedule (test3, currentTick, 5, 2)
+  testSched.schedule (test4, currentTick, 0, 5) # one time event
+  print testSched.tasks
   for currentTick in range (0,20):
     print "Tick: ", currentTick
-    mainSched.execute( currentTick)
+    testSched.execute( currentTick)
 
 
 if __name__ == "__main__":

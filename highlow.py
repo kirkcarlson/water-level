@@ -117,9 +117,29 @@ class HighLow ( object):
       None
     """
 
-    hiloReport = "{0} low:{1:.2f} open:{2:.2f} close:{3:.2f} high:{4:.2f}".format(
-      self.name, self.low, self.open, self.close, self.high)
-    reportChan.prEvent( reportTick, "hilo", hiloReport) 
+    if self.low is None:
+        low = '--'
+    else:
+        low = "{:.2f}".format( self.low)
+    if self.open is None:
+        open = '--'
+    else:
+        open = "{:.2f}".format( self.open)
+    if self.close is None:
+        close = '--'
+    else:
+        close = "{:.2f}".format( self.close)
+    if self.high is None:
+        high = '--'
+    else:
+        high = "{:.2f}".format( self.high)
+
+    hiloReport = self.name +\
+            " low:" + low +\
+            " open:" + open +\
+            " close:" + close +\
+            " high:" + high
+    reportChan.prReport( reportTick, hiloReport) 
 
 
   def getString ( self):

@@ -111,7 +111,7 @@ class Average( object):
     """
 
     aveReport = "{0} average is {1}{2}".format( self.name, self.average, self.units)
-    reportChan.prEvent( reportTick, "Ave", aveReport)
+    reportChan.prReport( reportTick, aveReport)
 
 
   def getString ( self):

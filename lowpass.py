@@ -52,9 +52,49 @@ class LowPass ( object):
     self.span = span
     self.members = deque([])
     self.positive = True
+    self.average = None
+    self.first = True
+
+
+  def reset( self): # for the averaging version
+    """Reset an average
+  
+    Args:
+      None
+    
+    Returns:
+      None
+    
+    Raises:
+      None
+    """
+    self.average = None
+    self.first = True
 
 
   def update( self, value):
+    """update low pass filter as the running average of the inputs
+  
+    Args:
+      value
+    
+    Returns:
+      Updated average value
+    
+    Raises:
+      None
+    """
+
+    if self.first:
+      self.first = False
+      newAverage = value
+    else:
+      newAverage = (self.average * (self.span - 1) + value) / self.span
+    self.average = newAverage
+    return newAverage
+
+
+  def updateFunky( self, value):
     """Update a low pass filter with a new vlaue
   
     Args:
@@ -116,3 +156,6 @@ class LowPass ( object):
 if __name__ == "__main__":
   testLP = LowPass( 4)
   testLP.test()
+
+
+

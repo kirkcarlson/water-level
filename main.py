@@ -29,16 +29,12 @@ THE SOFTWARE.
 BUGS:
 
 1 differentiate between instantaneous wave height or
-sea wave height and the peak value of a wave. Doing stats on the instantaneous
+sea wave height and the peak value of a wave.  Doing stats on the instantaneous
 value has limited value, because the mean should be zero as it has the DC
 component subtracted from it.
 
 2 Code is in a mixed state. It has some experimental code and some older code.
 Clean it up.
-
-3 Partial conversion to InfluxDB and Grafana show their benefits. Now need to limit
-the use of Series as the program eventually consumes all RAM...
-How to avoid lists in Python?
 
 6 add plotting of statistics stuff...anything that uses a Stats object or Average object
 cluster.py:    self.powerAverage = average.A<type 'type'>: type object 'Resamples' has no attribute 'resamples'
@@ -46,7 +42,7 @@ kirk@onyx:~/dev/water-level$ grep waveLengthSamples *py
 verage( "Wave Power Average", "nW?", 500)
 //main.py:  longWaterLevelAve = average.Average( "Averaged Water Level", "in",
 //main.py:  medWaterLevelAve = average.Average( "Wave Baseline Water Level", "in",
-main.py:  waveHeightAve = average.Average( "Average Wave Height", "in", 20)
+main.py:  filteredWaveHeight = average.Average( "Average Wave Height", "in", 20)
 main.py:  longWaterLevelStats =  stats.Stats( "Average Water Level", "in", 20)
 main.py:  waveHeightStats = stats.Stats( "Wave Height", "in", 20)
 main.py:  wavePowerStats = stats.Stats( "Wave Power", "nw?", 20)
@@ -63,52 +59,7 @@ are the last three redundant?
 8 watches can be greatly simplified, they should just check against a threshold with
 amount of hysteresis.
 
-* shorten SendMeasurementLevel so that it fits on one line ALL the time
-
-// change append to update when not appending to a list
-//HighLow
-//Average
-//Stats
-cluster.py:    #self.events.append ( { 'time': self.clusterTick,
-level.py:    self.times.append( tick)
-level.py:    self.levels.append( level)
-//lowpass.py:  def append( self, value):
-//lowpass.py:    self.members.append(value)
-//lowpass.py:      lp = self.append( test)
-main.py:  longWaterLevels.append( longAve)
-main.py:  openFileHandles.append( inChan)
-main.py:  openFileHandles.append( outChan)
-main.py:    waveHeightAve2 = waveHeightLowPass.append( instantWaveHeight)
-resamples.py:    #  resamples.append( Resample( config, tick, value))
-resamples.py:      self.levels.append( value)
-resamples.py:      self.levels.append( interpolate( self.resamplingDueTick, tick, value,
-sched.py:    self.tasks.append ( {
-sched.py:            self.tasks.append ( {
-series.py:  def append( self, value):
-series.py:      value: (float) value to be appended to time series
-series.py:    self.values.append( value)
-series.py:      self.append(test)
-spectra.py:    self.times.append( currentTime)
-spectra.py:      #print "size of sampleBuffer after first append ", len( sampleBuffer)
-spectra.py:          #print "size of sampleBuffer after subsequent append ",
-spectra.py:      #print "size of sampleBuffer after appends ", len( sampleBuffer)
-spectra.py:      # append response to time series
-spectra.py:      self.responses.append( abs(fft[ frequencyOfInterestIndex]))
-spectra.py:    samples.resamples.append(
-spectra.py:    specs.spectra.append ( Spectrum( samples.resamples))
-spectra.py:    samples.resamples.append( resamples.Resample( period, tick, value))
-spectra.py:    specs.spectra.append ( Spectrum( samples.resamples[-1]))
-//trap.py:  def append( self, value):
-//trap.py:      self.append( test)
-//trap.py:      self.append( test)
-//watch.py:    rates.append( RateTrigger ( "level rate " + str(i),
-//wave.py:    self.times.append(tick)
-//wave.py:    self.peaks.append(peak)
-//wave.py:    self.periods.append(period)
-//wave.py:    self.powers.append(power)
-
-
-* Not all of the Stats variables declared are being used
+9 Not all of the Stats variables declared are being used
 // waveHeightTrap is not being updated
 
 BUG
@@ -123,6 +74,7 @@ import math
 import average
 import cluster
 import dominant
+
 import findwave
 import highlow
 import influx
@@ -139,7 +91,7 @@ from config import CLUSTER_WINDOW
 from config import TARGET_PERIODS
 from config import SEND_START_RESPONSES
 from config import LONG_AVE_SAMPLES
-from config import MEDIUM_AVE_SAMPLES
+from config import BASELINE_AVE_SAMPLES
 from config import CLUSTER_MULTIPLIER
 from config import SEND_RAW_MEASUREMENTS
 from config import SEND_RAW_WAVES
@@ -179,13 +131,13 @@ DUR_30_MINUTES =     30 * 60
 outChan = None
 currentTick = None
 mainSched = mysched.Schedule()
-ifx = None # influxdb channel
+ifx = influx.Influx(INFLUXDB_DATABASE)
 
 dominantPeriod = None
 waveLengthSamples = None
 periodSamples = None
 
-longWaterLevel = None
+#longWaterLevel = None
 longWaterLevelAve = None
 longWaterLevelStats = None
 longWaterLevels = []
@@ -199,10 +151,11 @@ waveHeightHourlyHighLow = None
 waveHeightDailyHighLow = None
 waveHeightWeeklyHighLow = None
 waveHeightMonthlyHighLow = None
-waveHeightAve = None
-waveHeightStats = None
+wavePeakStats = None
 wavePowerStats = None
 waveCluster = None
+
+clusterTaskID = None
 
 
 #### FUNCTIONS ####
@@ -297,29 +250,6 @@ def processCommandLineArguments():
   return inputFileName, outputFileBaseName
 
 
-def reportCluster( tick):
-  """report on the wave clusters in the past CLUSTER_WINDOW
-  This is a scheduled routine, so limited arguments.
-
-  Args:
-    tick: (float)(s) Epoch of the end of the cluster
-  
-  Returns:
-    None
-  
-  Raises:
-    None
-  """
-
-  # the following doesn't look quite right...
-  print "DEBUG clusterReport marking the end of a cluster"
-  ifx.sendPoint( tick, "cluster", "energy", waveCluster.energy)
-  ifx.sendPoint( tick, "cluster", "distance", waveCluster.distance)
-  ifx.sendPoint( tick, "cluster", "period", waveCluster.maxPeriod+0)
-  waveCluster.prReport( tick)
-  waveCluster.reset( tick)
-
-
 def updateLongWaterLevel( tick):
   """update the long water level time series (once a minute)
   This is a scheduled routine, so limited arguments.
@@ -390,11 +320,10 @@ def hourlyReport( tick):
   Raises:
     None
   """
-  outChan.prReport( tick, "Hourly wave height ave " + waveHeightAve)
   outChan.prReport( tick, "Hourly wave height high " +
-                    waveHeightHourlyHighLow.high)
+                    str( waveHeightHourlyHighLow.high))
   outChan.prReport( tick, "Hourly wave height high " +
-                    waveHeightHourlyHighLow.low)
+                    str( waveHeightHourlyHighLow.low))
 
 
 def levelHourlyReport( tick):
@@ -411,9 +340,10 @@ def levelHourlyReport( tick):
     None
   """
 
-  outChan.prReport( tick, "Hourly water Level " + longWaterLevel)
-  outChan.prReport( tick, "Hourly water Level " + levelHourlyHighLow.high)
-  outChan.prReport( tick, "Hourly water Level " + levelHourlyHighLow.low)
+  outChan.prReport( tick, "Hourly water Level " +
+                    str( longWaterLevelAve.average))
+  outChan.prReport( tick, "Hourly water Level " + str( levelHourlyHighLow.high))
+  outChan.prReport( tick, "Hourly water Level " + str( levelHourlyHighLow.low))
   levelHourlyHighLow.report( tick, outChan)
   levelHourlyHighLow.reset()
 
@@ -473,6 +403,42 @@ def levelMonthlyReport( currentTime):
     levelMonthlyHighLow.reset()
 
 
+def waveHourlyReport( tick):
+  """report on the waves in the past hour
+  This is a scheduled routine, so limited arguments.
+
+  Args:
+    None
+
+  Returns:
+    None
+
+  Raises:
+    None
+  """
+  global waveCluster
+  waveCluster.wave.report()
+  waveCluster.wave.reset( tick)
+  
+
+def wakeHourlyReport( tick):
+  """report on the coherent wakes in the past hour
+  This is a scheduled routine, so limited arguments.
+
+  Args:
+    None
+
+  Returns:
+    None
+
+  Raises:
+    None
+  """
+  global waveCluster
+  waveCluster.wakeSum.report()
+  waveCluster.wakeSum.reset( tick)
+
+
 def doFFTs( currentTime):
   """do an FFT on each of the resampled data streams
   This is a scheduled routine, so limited arguments.
@@ -486,7 +452,6 @@ def doFFTs( currentTime):
   Raises:
     None
   """
-
   waveLengthSamples.fft()
   periodSamples.fft()
 
@@ -557,54 +522,21 @@ def sendLimitedFftSamples(tick):
     if sample.response is not None:
       if sample.response > waveLengthResponse:
         waveLengthResponse = sample.response
-      waveLength = sample.waveLength
+        waveLength = sample.waveLength
+      # waveLength = sample.waveLength
 
   # find the dominant response by period
-  for sample in periodSamples.resamples:
-    if sample.response is not None:
-      if sample.response > periodResponse:
-        periodResponse = sample.response
-      period = sample.cyclePeriod
+  # for sample in periodSamples.resamples:
+  #   if sample.response is not None:
+  #     if sample.response > periodResponse:
+  #       periodResponse = sample.response
+  #     period = sample.cyclePeriod
 
   ifx.sendTaggedPoint( tick, "spectrum", "waveLength", waveLength,
                        "waveLengthResponse", waveLengthResponse)
-  ifx.sendTaggedPoint( tick, "spectrum", "period", period,
-                       "periodicResponse", periodResponse)
+  # ifx.sendTaggedPoint( tick, "spectrum", "period", period,
+  #                      "periodicResponse", periodResponse)
   dominantPeriod.update( period, waveLength)
-
-
-def schedClusterEnd( currentTime, period):
-  """schedule the end of a cluster function
-
-  Args:
-    None
-
-  Returns:
-    processID from mysched.schedule()
-
-  Raises:
-    None
-  """
-  return mainSched.schedule( reportCluster,
-                             currentTime,
-                             0,
-                             period)
-
-
-def unschedClusterEnd( taskID):
-  """unschedule the end of a cluster function
-
-  Args:
-    None
-
-  Returns:
-    None
-
-  Raises:
-    None
-  """
-
-  mainSched.unschedule( taskID)
 
 
 #### MAIN ####
@@ -628,7 +560,8 @@ def main():
 
   global outChan
   global currentTick
-  global ifx
+  global mainSched
+  global waveCluster
 
   global dominantPeriod
   global waveLengthSamples
@@ -647,11 +580,9 @@ def main():
   global waveHeightWeeklyHighLow
   global waveHeightMonthlyHighLow
   global waveHeightLowPass
-  global waveHeightStats
-  global waveHeightAve
+  global wavePeakStats
 
   global wavePowerStats
-  global waveCluster
 
 
   # initialze the input and output streams
@@ -667,7 +598,6 @@ def main():
   outChan = report.ReportChannel( outputFileBaseName)
   #outChan = report.ReportChannel( "")
   openFileHandles.append( outChan)
-  ifx = influx.Influx(INFLUXDB_DATABASE)
 
   setupGracefulExit( openFileHandles)
 
@@ -690,22 +620,25 @@ def main():
   levelWeeklyHighLow = highlow.HighLow( "Water Level Limits", "in")
   levelMonthlyHighLow = highlow.HighLow( "Water Level Limits", "in")
   medWaterLevelAve = average.Average( "Wave Baseline Water Level", "in",
-                                      MEDIUM_AVE_SAMPLES)
-  waveHeightAve = average.Average( "Average Wave Height", "in", 20)
+                                      BASELINE_AVE_SAMPLES)
   waveHeightHourlyHighLow = highlow.HighLow( "Wave Height Limits", "in")
   waveHeightDailyHighLow = highlow.HighLow( "Wave Height Limits", "in")
   waveHeightWeeklyHighLow = highlow.HighLow( "Wave Height Limits", "in")
   waveHeightMonthlyHighLow = highlow.HighLow( "Wave Height Limits", "in")
-  waveHeightLowPass = lowpass.LowPass( 4) # number of wave cycles
+  waveHeightLowPass = lowpass.LowPass( 10) # number of wave cycles
     #lowpass = 2 eliminates 80% of waves, = 4 eliminates 94% in a light chop
     # 4 reduces sampling to 4/30 or 1 every 120 ms, that is still 8/sec
+    # 5 reduces sampling to 5/30 or 1 every 150 ms, that is still 6/sec
+    # 8 reduces sampling to 8/30 or 1 every 240 ms, that is still 4/sec
+    # 10 reduces sampling to 10/30 or 1 every 300 ms, that is still 3/sec
+    # changed to running average 7/21/18 with 5 samples
+    # changed to running average 7/23/18 with 15 samples
   waveHeightTrap = trap.Trap( 4, -1, "in", 30,
                               name="Wave Height",
                               port=outChan)
-  waveHeightStats = stats.Stats( "Wave Height", "in", 20)
+  wavePeakStats = stats.Stats( "Wave Height", "in", 20)
   wavePowerStats = stats.Stats( "Wave Power", "nw/ft?", 20)
-  waveCluster = cluster.Cluster( "Wave Clusters", outChan, CLUSTER_MULTIPLIER)
-  clusterTaskID = None
+  waveCluster = cluster.Cluster( outChan, mainSched, ifx)
 
   waveLengthSamples = resamples.Resamples()
   for waveLength in BOAT_LENGTHS:
@@ -741,6 +674,11 @@ def main():
   mainSched.schedule( levelWeeklyReport, currentTick, EVERY_WEEK, 0)
   mainSched.schedule( levelMonthlyReport, currentTick, EVERY_MONTH, 0)
 
+  mainSched.schedule( levelHourlyReport, currentTick, EVERY_HOUR, 0)
+
+  mainSched.schedule( waveHourlyReport, currentTick, EVERY_HOUR, 0)
+  mainSched.schedule( wakeHourlyReport, currentTick, EVERY_HOUR, 0)
+
   print "Initialization done"
 
 
@@ -753,7 +691,7 @@ def main():
     currentTick, currentLevel = inChan.getWaterLevel( currentTick)
     #currentTick, currentLevel = inChan.readLevel( currentTick)
     if SEND_RAW_MEASUREMENTS:
-      ifx.sendPoint( currentTick, "waterLevel", "waterLevel", currentLevel)
+      ifx.sendPoint( currentTick, "rawWaterLevel", "waterLevel", currentLevel)
 
     longWaterLevelAve.update( currentLevel)
     waveBaseLine = medWaterLevelAve.update( currentLevel)
@@ -766,32 +704,19 @@ def main():
       ifx.sendPoint( currentTick, "waterLevel",
                      "waveHeight", instantWaveHeight)
 
-    instantWaveHeightAve = waveHeightAve.update( instantWaveHeight)
+    waveHeightTrap.update( currentTick, instantWaveHeight)
+
+    filteredWaveHeight = waveHeightLowPass.update( instantWaveHeight)
     if SEND_RAW_MEASUREMENTS:
       ifx.sendPoint( currentTick, "waterLevel",
-                     "aveWaveHeight", instantWaveHeightAve)
-    waveHeightTrap.update( currentTick, instantWaveHeight)
-    waveHeightStats.update( instantWaveHeight)
-    # this really doesn't do what you want:
-    #   since this is instantaneous, the mean should be = 0.
-    #   This makes the coefficientOfVariation get really big, since it is
-    #   StdDev/mean.
-
-    waveHeightAve2 = waveHeightLowPass.update( instantWaveHeight)
-    if findWave.findWave( currentTick, waveHeightAve2):
+                     "filteredWaveHeight", filteredWaveHeight)
+    if findWave.findWave( currentTick, filteredWaveHeight):
       peak = findWave.wavePeakToPeak
       period = findWave.wavePeriod
       power = findWave.wavePower
-      #pylint: disable=pointless-string-statement
-      '''
-      #if wave is also coherent  ... or is the coherent test only for clusters
-      if dominantPeriod.firstPeriod == dominantPeriod.secondPeriod ==
-          dominantPeriod.thirdPeriod:
-        save power as part of the cluster
-      else:
-        save power as part of the background waves
-      '''
-      #pylint: enable=pointless-string-statement
+      dtd = datetime.datetime.fromtimestamp( currentTick)
+      print "  findWave {:%H:%M:%S}.{:02d} per:{:.2f} pk:{:.2f} pow:{:.2f}".format(\
+              dtd, dtd.microsecond/10000, period, peak, power)
       ifx.sendPoint( currentTick, "wave", "peak", peak)
       ifx.sendPoint( currentTick, "wave", "period", period)
       ifx.sendPoint( currentTick, "wave", "power", power)
@@ -803,26 +728,18 @@ def main():
       waveHeightMonthlyHighLow.update( peak)
 
       wavePowerStats.update( power)
-
-      if waveCluster.isACluster( currentTick, peak, period, power): 
-        ifx.sendPoint( currentTick, "cluster",
-                       "threshold", waveCluster.threshold)
-        if clusterTaskID is not None:
-          unschedClusterEnd( clusterTaskID) # so it can be updated
-          clusterTaskID = None
-        else:
-          waveCluster.reset( currentTick) # so it starts clean
-        waveCluster.update( currentTick, peak, period, power) 
-        clusterTaskID = schedClusterEnd( currentTick, CLUSTER_WINDOW)
+      wavePeakStats.update( peak)
+      waveCluster.update( currentTick, period, peak, power)
 
 
     # resample raw wave for spectral analysis
     waveLengthSamples.evaluate ( currentTick, instantWaveHeight,
                                  lastTick, lastWaveHeight)
-    periodSamples.evaluate ( currentTick, instantWaveHeight,
-                             lastTick, lastWaveHeight)
+    # periodSamples.evaluate ( currentTick, instantWaveHeight,
+    #                          lastTick, lastWaveHeight)
 
 # do the timed jobs that are due
+    # print "mainSched.execute", currentTick
     mainSched.execute(currentTick)
 
   #pylint: enable=too-many-statements

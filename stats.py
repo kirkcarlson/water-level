@@ -140,21 +140,15 @@ class Stats ( object):
       None
     """
 
-    reportChan.prEvent (reportTick,
-                        "Stat",
+    reportChan.prReport (reportTick,
                         "{0} average is {1}".format(
-                          self.name, self.average),
-                        VERB_COMMON)
-    reportChan.prEvent (reportTick,
-                        "Stat",
+                          self.name, self.average))
+    reportChan.prReport (reportTick,
                         "{0} standard deviation is {1}".format(
-                          self.name, self.standardDeviation),
-                        VERB_COMMON)
-    reportChan.prEvent (reportTick,
-                        "Stat",
+                          self.name, self.standardDeviation))
+    reportChan.prReport (reportTick,
                         "{0} coefficient of variation is {1}".format(
-                          self.name, self.coefficientOfVariation),
-                        VERB_COMMON)
+                          self.name, self.coefficientOfVariation))
 
 
   def getString ( self):

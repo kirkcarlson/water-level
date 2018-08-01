@@ -53,6 +53,17 @@ class Dominant (object):
     self.firstResponse = 0
     self.secondResponse = 0
     self.thirdResponse = 0
+    """what
+
+    Args:
+      power: float (mW?) power of the wave
+
+    Returns:
+      None
+
+    Raises:
+      None
+    """
 
 
   def update( self, period, response):
