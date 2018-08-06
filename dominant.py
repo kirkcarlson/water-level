@@ -27,97 +27,111 @@ THE SOFTWARE.
 
 #### IMPORTS ####
 
+from config import NUM_CANDIDATES
+
 
 #### CLASSES ####
 
-class Dominant (object):
-  """Dominant frequency."""
+class Dominant( object):
+
+    def __init__( self, period):
+        """ initialize the attributes of the dominant wave
+      
+        Args:
+          period: float (s) Number of seconds that items in list are valid
+        
+        Returns:
+          None
+        
+        Raises:
+          None
+        """
+        self.candidates = []
+        self.validPeriod = period
 
 
-  def __init__ (self):
-    """Return a dominant object.
-  
-    Args:
-      None
+    def reset( self):
+        """ resets the candidates for the dominant wave
+            this should not be necessary on a rolling platform
+      
+        Args:
+          None
+        
+        Returns:
+          None
+        
+        Raises:
+          None
+        """
+        self.candidates = []
+
+
+    def update( self, tick, period, peak, power):
+        """ maintains a list of the most dominant waves within a time period
+      
+        ..this assumes dominate power is also dominant peak and period
+
+        Args:
+          tick: float (s) number of second in the epoch
+          period: float (s) The wave period of the measured wave
+          peak: float (in) The peak-to-peak height of a wave in inches
+          power: float (mW?) The power of the wave
+        
+        Returns:
+          None
+        
+        Raises:
+          None
+        """
+        # remove candidates that are too old
+        ageLimit = tick - self.validPeriod
+        done = False
+        while not done and len(self.candidates) > 0:
+            for i, candidate in enumerate( self.candidates): 
+                if candidate[0] < ageLimit:
+                    self.candidates.pop(i)
+                    break
+            done = True
+
+        # if there is a vacancy, add the new value regardless of value
+        if len( self.candidates) < NUM_CANDIDATES:
+            self.candidates.append( (tick, period, peak, power))
+
+        # elif new value is greater than smallest on list, replace it
+        else:
+            minPower = power
+            minIndex = None
+            for i, candidate in enumerate( self.candidates):
+                if candidate[ 3] < minPower:
+                    minIndex = i
+                    minPower = candidate[ 3]
+            if minIndex is not None:
+                self.candidates.pop(i)
+                self.candidates.append( (tick, period, peak, power))
+
     
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-
-    self.firstPeriod = 0
-    self.secondPeriod = 0
-    self.thirdPeriod = 0
-    self.firstResponse = 0
-    self.secondResponse = 0
-    self.thirdResponse = 0
-    """what
-
-    Args:
-      power: float (mW?) power of the wave
-
-    Returns:
-      None
-
-    Raises:
-      None
-    """
+    def value( self):
+        """ returns the dominant wave period, peak, and power
+      
+        Args:
+          None
+        
+        Returns:
+          tuple of the period, peak and power of dominant wave
+        
+        Raises:
+          None
+        """
+        maxPower = 0
+        for i, candidate in enumerate( self.candidates):
+            if candidate[ 3] > maxPower:
+                maxIndex = i
+                maxPower = candidate[ 3]
+        return (self.candidates[i][1], self.candidates[i][2], \
+                    self.candidates[i][3])
 
 
-  def update( self, period, response):
-    """Add a spectrum measurement to determine which is dominant
-  
-    Args:
-      period: float (s) The wave period of the measured wave
-      response: float (nW) The response of the particular period
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-
-    if response > self.firstResponse:
-      self.thirdResponse = self.secondResponse
-      self.secondResponse = self.firstResponse
-      self.firstResponse = response
-      self.thirdPeriod = self.secondPeriod
-      self.secondPeriod = self.firstPeriod
-      self.firstPeriod = period
-    elif response > self.secondResponse:
-      self.thirdResponse = self.secondResponse
-      self.secondResponse = response
-      self.thirdPeriod = self.secondPeriod
-      self.secondPeriod = period
-    elif response > self.thirdResponse:
-      self.thirdResponse = response
-      self.thirdPeriod = period
-
-
-  def reset (self):
-    """Clear data arrays before the saved period of time.
-  
-    Args:
-      period: (int) (s) time to preserve in the current lists
-    
-    Returns:
-      None
-    
-    Raises:
-      None
-    """
-    self.firstPeriod = 0
-    self.secondPeriod = 0
-    self.thirdPeriod = 0
-    self.firstResponse = 0
-    self.secondResponse = 0
-    self.thirdResponse = 0
-
-
-  def test(self):
+def test(self):
     """Test the functions and methods of this module.
   
     Args:
@@ -136,4 +150,4 @@ if __name__ == "__main__":
   # execute only if run as a script
   #RW = sdominant(0) 
   #RW.test()
-  pass
+  test()

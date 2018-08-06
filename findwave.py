@@ -32,7 +32,6 @@ import math
 #from config import POWER_CONSTANT 
 
 
-
 #### CLASSES ####
 
 # pylint: disable=too-few-public-methods

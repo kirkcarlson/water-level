@@ -141,6 +141,9 @@ PEAK_THRESHOLD = 0. # inches
 WAVE_PERIOD_THRESHOLD = 0 # seconds
 WAVE_PERIOD_CUTOFF = 100 # seconds
 
+NUM_CANDIDATES = 6 # number of candidates in dominant wave pool
+DOMINANT_WAVE_PERIOD = 10 * 60 # 10 minutes in seconds
+
 
 #cluster configuration
 CLUSTER_WINDOW = 3 # sec

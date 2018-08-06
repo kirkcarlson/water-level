@@ -75,6 +75,7 @@ import average
 import cluster
 import dominant
 
+import findwake
 import findwave
 import highlow
 import influx
@@ -96,6 +97,7 @@ from config import CLUSTER_MULTIPLIER
 from config import SEND_RAW_MEASUREMENTS
 from config import SEND_RAW_WAVES
 from config import INFLUXDB_DATABASE
+from config import DOMINANT_WAVE_PERIOD
 
 #### LOCAL CONSTANTS ####
 
@@ -133,7 +135,7 @@ currentTick = None
 mainSched = mysched.Schedule()
 ifx = influx.Influx(INFLUXDB_DATABASE)
 
-dominantPeriod = None
+dominantWave = None
 waveLengthSamples = None
 periodSamples = None
 
@@ -153,7 +155,7 @@ waveHeightWeeklyHighLow = None
 waveHeightMonthlyHighLow = None
 wavePeakStats = None
 wavePowerStats = None
-waveCluster = None
+findWake = None
 
 clusterTaskID = None
 
@@ -403,6 +405,23 @@ def levelMonthlyReport( currentTime):
     levelMonthlyHighLow.reset()
 
 
+def waveUpdate( tick):
+    """ update the graph for the dominant wave
+
+    Args:
+      None
+
+    Returns:
+      None
+
+    Raises:
+      None
+    """
+    tuple = dominantWave.value()
+    ifx.sendPoint( currentTick, "dominantWave", "period", tuple[0])
+    ifx.sendPoint( currentTick, "dominantWave", "peak", tuple[1])
+    ifx.sendPoint( currentTick, "dominantWave", "power", tuple[2])
+
 def waveHourlyReport( tick):
   """report on the waves in the past hour
   This is a scheduled routine, so limited arguments.
@@ -416,9 +435,9 @@ def waveHourlyReport( tick):
   Raises:
     None
   """
-  global waveCluster
-  waveCluster.wave.report()
-  waveCluster.wave.reset( tick)
+  global findWake
+  findWake.waveSummary.report()
+  findWake.waveSummary.reset( tick)
   
 
 def wakeHourlyReport( tick):
@@ -434,9 +453,9 @@ def wakeHourlyReport( tick):
   Raises:
     None
   """
-  global waveCluster
-  waveCluster.wakeSum.report()
-  waveCluster.wakeSum.reset( tick)
+  global findWake
+  findWake.wakeSummary.report()
+  findWake.wakeSummary.reset( tick)
 
 
 def doFFTs( currentTime):
@@ -534,9 +553,6 @@ def sendLimitedFftSamples(tick):
 
   ifx.sendTaggedPoint( tick, "spectrum", "waveLength", waveLength,
                        "waveLengthResponse", waveLengthResponse)
-  # ifx.sendTaggedPoint( tick, "spectrum", "period", period,
-  #                      "periodicResponse", periodResponse)
-  dominantPeriod.update( period, waveLength)
 
 
 #### MAIN ####
@@ -561,9 +577,9 @@ def main():
   global outChan
   global currentTick
   global mainSched
-  global waveCluster
+  global findWake
 
-  global dominantPeriod
+  global dominantWave
   global waveLengthSamples
   global periodSamples
 
@@ -607,7 +623,7 @@ def main():
   currentTick, currentLevel = inChan.getWaterLevel( currentTick)
 
   findWave = findwave.FindWave() # determine wave peaks and periods
-  dominantPeriod = dominant.Dominant() # determine dominant Period and response
+  dominantWave = dominant.Dominant( DOMINANT_WAVE_PERIOD) # determine dominant wave
 
   instantWaveHeight = 0
   longWaterLevels = []
@@ -638,7 +654,7 @@ def main():
                               port=outChan)
   wavePeakStats = stats.Stats( "Wave Height", "in", 20)
   wavePowerStats = stats.Stats( "Wave Power", "nw/ft?", 20)
-  waveCluster = cluster.Cluster( outChan, mainSched, ifx)
+  findWake = findwake.FindWake( outChan, mainSched, ifx)
 
   waveLengthSamples = resamples.Resamples()
   for waveLength in BOAT_LENGTHS:
@@ -666,6 +682,7 @@ def main():
   ## MAIN schedule periodic tasks
 
   mainSched.schedule( updateLongWaterLevel, currentTick, EVERY_MINUTE, 0)
+  mainSched.schedule( waveUpdate, currentTick, EVERY_MINUTE, 0)
   mainSched.schedule( doFFTs, currentTick, EVERY_200_MSEC, 0)
 
   mainSched.schedule( hourlyReport, currentTick, EVERY_HOUR, 0)
@@ -720,7 +737,7 @@ def main():
       ifx.sendPoint( currentTick, "wave", "peak", peak)
       ifx.sendPoint( currentTick, "wave", "period", period)
       ifx.sendPoint( currentTick, "wave", "power", power)
-      dominantPeriod.reset()
+      dominantWave.update( currentTick, period, peak, power)
 
       waveHeightHourlyHighLow.update( peak)
       waveHeightDailyHighLow.update( peak)
@@ -729,7 +746,7 @@ def main():
 
       wavePowerStats.update( power)
       wavePeakStats.update( peak)
-      waveCluster.update( currentTick, period, peak, power)
+      findWake.update( currentTick, period, peak, power)
 
 
     # resample raw wave for spectral analysis
